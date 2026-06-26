@@ -7,7 +7,7 @@ extends Control
 #   2. 字體視覺提升：下載開源思源宋體 (Noto Serif TC Variable Font) 置於 assets/fonts/，並動態套用到所有 Label 與 Button 控制項，對齊 Mockup 中的雅緻明體/宋體古典風格。
 #   3. 存讀檔彈窗改用 1UI/save_load 正式美術零件（main_panel + 6格存檔卡 + 選取高亮框），
 #      取代原本沿用案件目標面板貼圖的純文字暫時版本，並依保存/讀取模式分別控制格子是否可點擊。
-#   4. 調查紀錄對齊與佈局優化：重構對白紀錄彈窗結構，列表左右 Margin 設為 156 以完美貼齊金屬面板左右邊緣；獨立關閉按鈕絕對定位於 card 右上方並稍微超出金屬外框；加寬列表上方 margin 讓對白紀錄稍向下移，更具呼吸感。
+#   4. 調查紀錄對齊與佈局優化：重構對白紀錄彈窗結構，列表左右 Margin 設為 156 以完美貼齊金屬面板左右邊緣；獨立關閉按鈕絕對定位於 card 右上方並稍微超出金屬外框；加寬列表上方 margin (由原本 24px 調整至 76px 常數 MARGIN_LOG_SCROLL_TOP) 讓第一條對白紀錄完全避開頂部突出綠寶石花紋，完美貼齊磨砂面板內緣。
 # ------------------------------
 
 # ------------------------------
@@ -153,6 +153,7 @@ const MARGIN_SETTINGS_POPUP := Vector4(40, 28, 34, 28)
 # 框邊裁切。
 const MARGIN_SAVE_LOAD_POPUP := Vector4(34, 20, 30, 18)
 const MARGIN_LOG_POPUP := Vector4(70, 30, 70, 30)
+const MARGIN_LOG_SCROLL_TOP := 76 # 調查紀錄捲動容器的頂部邊距，用於避開面板頂部突出的發光綠寶石裝飾
 const MARGIN_SAVE_LOAD_SLOT_TEXT := Vector4(8, 0, 8, 8)
 const MARGIN_LOG_ENTRY := Vector4(22, 12, 20, 12)
 const MARGIN_OBJECTIVE := Vector4(20, 11, 18, 11)
@@ -732,7 +733,7 @@ func _build_dialogue_log_popup() -> void:
 	scroll_margin.name = "LogScrollMargin"
 	scroll_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_apply_margins(scroll_margin, Vector4(0, 24, 0, 0))
+	_apply_margins(scroll_margin, Vector4(0, MARGIN_LOG_SCROLL_TOP, 0, 0))
 	main_layout.add_child(scroll_margin)
 
 	var scroll := ScrollContainer.new()
