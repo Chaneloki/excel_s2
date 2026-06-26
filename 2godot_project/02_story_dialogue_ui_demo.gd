@@ -5,6 +5,9 @@ extends Control
 # 2026-06-26:
 #   1. 案件目標 UI 微調與重構：合併 builder 函數至單一 VBoxContainer (CaseObjectiveWidget) 管理，設定 separation=-6 消除垂直間隙，並配合外層 MarginContainer (CaseObjectiveContentMargin) 設定 margin_left=10, margin_right=5 來對齊金屬邊框實體邊緣。
 #   2. 字體視覺提升：下載開源思源宋體 (Noto Serif TC Variable Font) 置於 assets/fonts/，並動態套用到所有 Label 與 Button 控制項，對齊 Mockup 中的雅緻明體/宋體古典風格。
+#   3. 存讀檔彈窗改用 1UI/save_load 正式美術零件（main_panel + 6格存檔卡 + 選取高亮框），
+#      取代原本沿用案件目標面板貼圖的純文字暫時版本，並依保存/讀取模式分別控制格子是否可點擊。
+#   4. 調查紀錄對齊與佈局優化：重構對白紀錄彈窗結構，列表左右 Margin 設為 156 以完美貼齊金屬面板左右邊緣；獨立關閉按鈕絕對定位於 card 右上方並稍微超出金屬外框；加寬列表上方 margin 讓對白紀錄稍向下移，更具呼吸感。
 # ------------------------------
 
 # ------------------------------
@@ -30,6 +33,14 @@ const PANEL_CASE_OBJECTIVE := UI_SKIN_DIR + "panel_case_objective_ornate.png"
 const PANEL_OBJECTIVE_HEADER_EXPANDED := UI_SKIN_DIR + "panel_case_objective_header_open.png"
 const PANEL_OBJECTIVE_HEADER_COLLAPSED := UI_SKIN_DIR + "panel_case_objective_header_closed.png"
 
+# 存讀檔彈窗素材（來源1UI/save_load，見assets/ui/save_load/README.md）。
+const UI_SKIN_SAVE_LOAD_DIR := "res://assets/ui/save_load/"
+const BG_SAVE_LOAD_OFFICE := UI_SKIN_SAVE_LOAD_DIR + "bg_save_load_office.png"
+const PANEL_SAVE_LOAD_MAIN := UI_SKIN_SAVE_LOAD_DIR + "panel_main_save_load.png"
+const SAVE_LOAD_SLOT_EMPTY := UI_SKIN_SAVE_LOAD_DIR + "slot_empty_normal.png"
+const SAVE_LOAD_SLOT_SAVED := UI_SKIN_SAVE_LOAD_DIR + "slot_saved_normal.png"
+const SAVE_LOAD_SLOT_SELECTED_FRAME := UI_SKIN_SAVE_LOAD_DIR + "frame_slot_selected.png"
+
 # ------------------------------
 # 設定區：色彩、字級與共用尺寸
 # ------------------------------
@@ -49,12 +60,13 @@ const COLOR_DIALOGUE_INNER_SHADOW := Color(0.0, 0.0, 0.0, 0.24)
 
 const FONT_MENU_LABEL := 13
 const FONT_POPUP_TITLE := 28
-const FONT_POPUP_CLOSE := 20
+const FONT_POPUP_CLOSE := 36
 const FONT_POPUP_BUTTON := 18
 const FONT_VOLUME_LABEL := 20
-const FONT_SLOT_TITLE := 18
-const FONT_SLOT_CHAPTER := 20
-const FONT_SLOT_LOCATION := 15
+const FONT_SAVE_LOAD_SLOT_TITLE := 26
+const FONT_SAVE_LOAD_SLOT_CHAPTER := 20
+const FONT_SAVE_LOAD_SLOT_LOCATION := 17
+const FONT_SAVE_LOAD_SLOT_EMPTY_LABEL := 17
 const FONT_LOG_SPEAKER := 17
 const FONT_LOG_TEXT := 20
 const FONT_OBJECTIVE_ITEM := 20
@@ -67,9 +79,8 @@ const MENU_STACK_SIZE := Vector2(96, 56)
 # 三態貼圖已經用「核心圖案中心對齊」處理過，核心大小完全一致，
 # 所以這裡單純放大MENU_BUTTON_SIZE，hover不會因為放大而出現縮放感。
 const MENU_BUTTON_SIZE := Vector2(96, 84)
-const POPUP_CLOSE_BUTTON_SIZE := Vector2(40, 34)
-const SAVE_SLOT_MIN_SIZE := Vector2(0, 76)
-const SAVE_SLOT_ACTION_SIZE := Vector2(88, 38)
+const POPUP_CLOSE_BUTTON_SIZE := Vector2(64, 56)
+const SAVE_LOAD_SLOT_SIZE := Vector2(480, 360)
 const VOLUME_LABEL_SIZE := Vector2(58, 0)
 const DECORATIVE_LINE_HEIGHT := 2
 
@@ -87,10 +98,12 @@ const STYLE_POPUP_CONTENT_MARGIN := 18
 # 底色+銀色細邊呼應整體UI風格指南，跟標題列圖片的造型呼應但不重複。
 const OBJECTIVE_CONTENT_BORDER_WIDTH := 1
 const OBJECTIVE_CONTENT_CORNER_RADIUS := 4
-const STYLE_SLOT_TEXTURE_MARGIN := 24
-const STYLE_SLOT_CONTENT_MARGIN := 10
 const STYLE_LOG_TEXTURE_MARGIN := 22
 const STYLE_LOG_CONTENT_MARGIN := 10
+# 存讀檔主面板（panel_main_save_load.png）邊框較粗，需要較大的texture_margin
+# 才不會把四角裝飾拉伸變形。
+const STYLE_SAVE_LOAD_TEXTURE_MARGIN := 34
+const STYLE_SAVE_LOAD_CONTENT_MARGIN := 18
 
 const SHADOW_OFFSET_SMALL := Vector2(1, 1)
 const SHADOW_OFFSET_DIALOGUE := Vector2(2, 2)
@@ -108,7 +121,11 @@ const SLIDER_STEP := 0.01
 const ANCHOR_HOST := Vector4(0.400, 0.000, 0.785, 1.000)
 const ANCHOR_TOP_MENU := Vector4(0.665, 0.020, 0.972, 0.122)
 const ANCHOR_SETTINGS_POPUP := Vector4(0.36, 0.22, 0.68, 0.55)
-const ANCHOR_SAVE_LOAD_POPUP := Vector4(0.25, 0.16, 0.76, 0.68)
+const ANCHOR_SAVE_LOAD_POPUP := Vector4(0.0, 0.0, 1.0, 1.0)
+# 卡片面板（main_panel）相對於上面全螢幕背景的內縮比例，留出四周空間
+# 讓bg_save_load_office.png的書房場景可以被看到，呼應mockup的「面板浮在
+# 書房場景上」構圖。高度留到0.92才能放滿2排存檔格+標題列，不被框邊裁切。
+const ANCHOR_SAVE_LOAD_CARD := Vector4(0.06, 0.06, 0.94, 0.94)
 const ANCHOR_DIALOGUE_LOG_POPUP := Vector4(0.18, 0.12, 0.82, 0.72)
 
 # 標題列（圖片資產，圖中已含「案件目標」文字跟展開/收合箭頭，
@@ -127,7 +144,11 @@ const ANCHOR_NAME_PLATE := Vector4(0.090, 0.620, 0.285, 0.695)
 
 const MARGIN_POPUP := Vector4(42, 30, 38, 30)
 const MARGIN_SETTINGS_POPUP := Vector4(40, 28, 34, 28)
-const MARGIN_SAVE_SLOT := Vector4(24, 12, 20, 10)
+# 存讀檔卡片內距比一般彈窗更緊，把空間留給2排存檔格，避免格子被卡片
+# 框邊裁切。
+const MARGIN_SAVE_LOAD_POPUP := Vector4(34, 20, 30, 18)
+const MARGIN_LOG_POPUP := Vector4(70, 30, 70, 30)
+const MARGIN_SAVE_LOAD_SLOT_TEXT := Vector4(8, 0, 8, 8)
 const MARGIN_LOG_ENTRY := Vector4(22, 12, 20, 12)
 const MARGIN_OBJECTIVE := Vector4(20, 11, 18, 11)
 const MARGIN_DIALOGUE := Vector4(92, 48, 78, 34)
@@ -138,8 +159,10 @@ const GAP_POPUP_LAYOUT := 16
 const GAP_SETTINGS_LAYOUT := 18
 const GAP_TITLE_ROW := 12
 const GAP_VOLUME_ROW := 16
-const GAP_SAVE_SLOT_ROW := 18
-const GAP_SAVE_SLOT_INFO := 3
+const GAP_SAVE_LOAD_GRID_H := 16
+const GAP_SAVE_LOAD_GRID_V := 16
+# 存讀檔卡片的標題列跟格子之間用較小間距，把垂直空間留給存檔格本身。
+const GAP_SAVE_LOAD_POPUP_LAYOUT := 10
 const GAP_LOG_ENTRIES := 10
 const GAP_LOG_ENTRY_TEXT := 5
 const GAP_OBJECTIVE_LIST := 11
@@ -184,10 +207,25 @@ const DIALOGUE_LINES := [
 	},
 ]
 
-const SAVE_SLOT_DATA := [
-	{"slot": "案件簿 01", "chapter": "第一章・白塔街", "location": "偵探所 / 雨夜", "state": "可保存"},
-	{"slot": "案件簿 02", "chapter": "空白檔案", "location": "尚未開始調查", "state": "空"},
-	{"slot": "案件簿 03", "chapter": "空白檔案", "location": "尚未開始調查", "state": "空"},
+# 存讀檔模式：只影響標題文字跟空白格是否可點擊，格子排版本身不變。
+const SAVE_LOAD_MODE_SAVE := "save"
+const SAVE_LOAD_MODE_LOAD := "load"
+
+const SAVE_LOAD_STATE_SAVED := "saved"
+const SAVE_LOAD_STATE_EMPTY := "empty"
+
+const SAVE_LOAD_GRID_COLUMNS := 3
+const SAVE_LOAD_LABEL_EMPTY := "空白檔案"
+
+# 6個案件檔案格的原型測試資料：照mockup排版，前2格已存檔、其餘4格空白
+# （見0mockup/save_load_ui_mockup.png）。
+const SAVE_LOAD_SLOT_DATA := [
+	{"state": SAVE_LOAD_STATE_SAVED, "chapter": "第1章", "location": "白塔街偵探所 / 調查中"},
+	{"state": SAVE_LOAD_STATE_SAVED, "chapter": "第1章", "location": "白塔街偵探所 / 調查中"},
+	{"state": SAVE_LOAD_STATE_EMPTY},
+	{"state": SAVE_LOAD_STATE_EMPTY},
+	{"state": SAVE_LOAD_STATE_EMPTY},
+	{"state": SAVE_LOAD_STATE_EMPTY},
 ]
 
 # ------------------------------
@@ -203,9 +241,12 @@ var objective_panel: PanelContainer
 var objective_list: VBoxContainer
 var objective_panel_collapsed := false
 var settings_panel: PanelContainer
-var save_load_panel: PanelContainer
-var save_load_title: Label
-var dialogue_log_panel: PanelContainer
+var save_load_panel: Control
+var save_load_mode := SAVE_LOAD_MODE_SAVE
+var save_load_selected_index := 0
+var save_load_slot_buttons: Array[TextureButton] = []
+var save_load_selection_frames: Array[TextureRect] = []
+var dialogue_log_panel: Control
 var auto_button: BaseButton
 var auto_advance_timer: Timer
 var auto_advance_enabled := false
@@ -442,39 +483,275 @@ func _build_settings_popup() -> void:
 
 
 func _build_save_load_popup() -> void:
-	save_load_panel = PanelContainer.new()
+	save_load_panel = Control.new()
 	save_load_panel.name = "SaveLoadPopup_CaseFiles"
 	save_load_panel.visible = false
 	_apply_anchors(save_load_panel, ANCHOR_SAVE_LOAD_POPUP)
-	save_load_panel.add_theme_stylebox_override("panel", _make_texture_style(PANEL_DIALOGUE_BOX, STYLE_POPUP_TEXTURE_MARGIN, STYLE_POPUP_CONTENT_MARGIN))
 	add_child(save_load_panel)
 
-	var layout := _make_popup_layout(save_load_panel, MARGIN_POPUP, GAP_POPUP_LAYOUT)
-	_make_popup_title_row(layout, "保存調查檔案", _close_save_load_popup, "Button_CloseSaveLoad")
-	save_load_title = layout.get_child(0).get_child(0) as Label
+	# 近全螢幕的書房背景，讓卡片面板浮在場景上，呼應mockup構圖。
+	var background := TextureRect.new()
+	background.name = "Background_SaveLoadOffice"
+	background.texture = load(BG_SAVE_LOAD_OFFICE)
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	save_load_panel.add_child(background)
 
-	for slot_data in SAVE_SLOT_DATA:
-		layout.add_child(_make_save_slot_row(slot_data["slot"], slot_data["chapter"], slot_data["location"], slot_data["state"]))
+	var card := PanelContainer.new()
+	card.name = "CardPanel_SaveLoadMain"
+	_apply_anchors(card, ANCHOR_SAVE_LOAD_CARD)
+	card.add_theme_stylebox_override("panel", _make_texture_style(PANEL_SAVE_LOAD_MAIN, STYLE_SAVE_LOAD_TEXTURE_MARGIN, STYLE_SAVE_LOAD_CONTENT_MARGIN))
+	save_load_panel.add_child(card)
+
+	var layout := _make_popup_layout(card, MARGIN_SAVE_LOAD_POPUP, GAP_SAVE_LOAD_POPUP_LAYOUT)
+	_make_close_only_row(layout, _close_save_load_popup, "Button_CloseSaveLoad")
+
+	var center_container := CenterContainer.new()
+	center_container.name = "GridCenterContainer"
+	center_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	layout.add_child(center_container)
+
+	var grid := GridContainer.new()
+	grid.name = "SaveLoadSlotGrid"
+	grid.columns = SAVE_LOAD_GRID_COLUMNS
+	grid.add_theme_constant_override("h_separation", GAP_SAVE_LOAD_GRID_H)
+	grid.add_theme_constant_override("v_separation", GAP_SAVE_LOAD_GRID_V)
+	center_container.add_child(grid)
+
+	save_load_slot_buttons.clear()
+	save_load_selection_frames.clear()
+	var slot_index := 0
+	for slot_data in SAVE_LOAD_SLOT_DATA:
+		grid.add_child(_make_save_load_slot(slot_index, slot_data))
+		slot_index += 1
+
+	_refresh_save_load_grid()
+
+
+func _make_save_load_slot(slot_index: int, slot_data: Dictionary) -> Control:
+	var slot_root := Control.new()
+	slot_root.name = "SaveLoadSlot_%02d" % slot_index
+	slot_root.custom_minimum_size = SAVE_LOAD_SLOT_SIZE
+	slot_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slot_root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+	var is_saved: bool = slot_data["state"] == SAVE_LOAD_STATE_SAVED
+
+	# 選取高亮框：現在疊在格子底圖（檔案紙張）之下，好讓發光效果從紙張後面透出來。
+	# 同時為了對齊紙張實際大小（底圖左右有透明留白，而高亮框沒有），高亮框寬度要縮小、高度要拉高。
+	var selection_frame := TextureRect.new()
+	selection_frame.name = "SelectionFrame"
+	selection_frame.texture = load(SAVE_LOAD_SLOT_SELECTED_FRAME)
+	selection_frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	selection_frame.stretch_mode = TextureRect.STRETCH_SCALE
+	selection_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	selection_frame.visible = false
+	# 經過精確圖像分析計算，以使 833x771 大小之高亮框（發光區域 x:72~763, y:55~705）
+	# 能完美對應並包裹對齊 1080x810 卡片中的紙張邊緣：
+	# - 已存檔格子（紙張 x:218~909, y:28~765）：左 0.135, 右 0.906, 上 -0.042, 下 1.037
+	# - 空白格子（紙張 x:206~897, y:49~720）：左 0.124, 右 0.895, 上 -0.010, 下 0.973
+	if is_saved:
+		selection_frame.anchor_left = 0.135
+		selection_frame.anchor_right = 0.906
+		selection_frame.anchor_top = -0.042
+		selection_frame.anchor_bottom = 1.037
+	else:
+		selection_frame.anchor_left = 0.124
+		selection_frame.anchor_right = 0.895
+		selection_frame.anchor_top = -0.010
+		selection_frame.anchor_bottom = 0.973
+	selection_frame.offset_left = 0
+	selection_frame.offset_top = 0
+	selection_frame.offset_right = 0
+	selection_frame.offset_bottom = 0
+	slot_root.add_child(selection_frame)
+	save_load_selection_frames.append(selection_frame)
+
+	var button := TextureButton.new()
+	button.name = "Button_Slot"
+	button.set_anchors_preset(Control.PRESET_FULL_RECT)
+	button.ignore_texture_size = true
+	button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_COVERED
+	button.focus_mode = Control.FOCUS_NONE
+	button.texture_normal = load(SAVE_LOAD_SLOT_SAVED if is_saved else SAVE_LOAD_SLOT_EMPTY)
+	button.pressed.connect(_on_save_load_slot_pressed.bind(slot_index))
+	slot_root.add_child(button)
+	save_load_slot_buttons.append(button)
+
+	# 建立頂部標題 Label
+	var title_label := Label.new()
+	title_label.name = "TitleLabel"
+	title_label.text = ("案件檔案 %02d" % (slot_index + 1)) if is_saved else SAVE_LOAD_LABEL_EMPTY
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_apply_label_style(title_label, FONT_SAVE_LOAD_SLOT_TITLE, COLOR_TEXT_MAIN, COLOR_SHADOW_SOFT, SHADOW_OFFSET_SMALL)
+	
+	if is_saved:
+		title_label.anchor_left = 0.11
+		title_label.anchor_right = 0.91
+	else:
+		title_label.anchor_left = 0.1
+		title_label.anchor_right = 0.9
+
+	# 稍微再下移一點（由原先的 0.12~0.22 改為 0.15~0.25），避開紙張頂端的迴紋針裝飾，使文字更加美觀
+	title_label.anchor_top = 0.15
+	title_label.anchor_bottom = 0.25
+	slot_root.add_child(title_label)
+
+	if is_saved:
+		# 解析 location 欄位以拆分地點與狀態（例如將 "白塔街偵探所 / 調查中" 拆分）
+		var location_str: String = slot_data.get("location", "")
+		var loc_parts := location_str.split(" / ")
+		var loc_text := loc_parts[0] if loc_parts.size() > 0 else ""
+		var status_text := loc_parts[1] if loc_parts.size() > 1 else "調查中"
+
+		var chapter_label := Label.new()
+		chapter_label.name = "ChapterLabel"
+		chapter_label.text = slot_data.get("chapter", "")
+		chapter_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		chapter_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+		chapter_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_apply_label_style(chapter_label, FONT_SAVE_LOAD_SLOT_CHAPTER, COLOR_TEXT_MAIN, COLOR_SHADOW_SOFT, SHADOW_OFFSET_SMALL)
+		chapter_label.anchor_left = 0.33
+		chapter_label.anchor_right = 0.9
+		chapter_label.anchor_top = 0.52
+		chapter_label.anchor_bottom = 0.61
+		slot_root.add_child(chapter_label)
+
+		var location_label := Label.new()
+		location_label.name = "LocationLabel"
+		location_label.text = loc_text
+		location_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		location_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+		location_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_apply_label_style(location_label, FONT_SAVE_LOAD_SLOT_LOCATION, COLOR_TEXT_MAIN, COLOR_SHADOW_SOFT, SHADOW_OFFSET_SMALL)
+		location_label.anchor_left = 0.33
+		location_label.anchor_right = 0.9
+		location_label.anchor_top = 0.61
+		location_label.anchor_bottom = 0.69
+		slot_root.add_child(location_label)
+
+		var status_label := Label.new()
+		status_label.name = "StatusLabel"
+		status_label.text = status_text
+		status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		status_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+		status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_apply_label_style(status_label, FONT_SAVE_LOAD_SLOT_LOCATION, COLOR_ACCENT_GREEN, COLOR_SHADOW_SOFT, SHADOW_OFFSET_SMALL)
+		status_label.anchor_left = 0.33
+		status_label.anchor_right = 0.9
+		status_label.anchor_top = 0.69
+		status_label.anchor_bottom = 0.77
+		slot_root.add_child(status_label)
+
+	return slot_root
 
 
 func _build_dialogue_log_popup() -> void:
-	dialogue_log_panel = PanelContainer.new()
+	dialogue_log_panel = Control.new()
 	dialogue_log_panel.name = "DialogueLogPopup"
 	dialogue_log_panel.visible = false
-	_apply_anchors(dialogue_log_panel, ANCHOR_DIALOGUE_LOG_POPUP)
-	dialogue_log_panel.add_theme_stylebox_override("panel", _make_texture_style(PANEL_DIALOGUE_BOX, STYLE_POPUP_TEXTURE_MARGIN, STYLE_POPUP_CONTENT_MARGIN))
+	_apply_anchors(dialogue_log_panel, ANCHOR_SAVE_LOAD_POPUP)
 	add_child(dialogue_log_panel)
 
-	var layout := _make_popup_layout(dialogue_log_panel, MARGIN_POPUP, GAP_POPUP_LAYOUT)
-	_make_popup_title_row(layout, "調查紀錄", _close_dialogue_log_popup, "Button_CloseDialogueLog")
+	# 全螢幕書房背景
+	var background := TextureRect.new()
+	background.name = "Background_LogOffice"
+	background.texture = load(BG_SAVE_LOAD_OFFICE)
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dialogue_log_panel.add_child(background)
+
+	# 大面板外框，與存讀檔面板一模一樣
+	var card := PanelContainer.new()
+	card.name = "CardPanel_LogMain"
+	_apply_anchors(card, ANCHOR_SAVE_LOAD_CARD)
+	card.add_theme_stylebox_override("panel", _make_texture_style(PANEL_SAVE_LOAD_MAIN, STYLE_SAVE_LOAD_TEXTURE_MARGIN, STYLE_SAVE_LOAD_CONTENT_MARGIN))
+	dialogue_log_panel.add_child(card)
+
+	# 主邊距容器 (左右邊距設為 156，以在 card 的 content_margin (18) 基礎上，等比例對齊 174px 的金屬邊框內緣磨砂面板，避免 entries 蓋在金屬框上)
+	var main_margin := MarginContainer.new()
+	main_margin.name = "LogMainMargin"
+	main_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# 左右設為 156 (累加 content_margin 的 18px 後恰好等於 174px 金屬邊框內緣)，上下設為原先的 MARGIN_LOG_POPUP.y (30) 與 MARGIN_LOG_POPUP.w (30)
+	_apply_margins(main_margin, Vector4(156, MARGIN_LOG_POPUP.y, 156, MARGIN_LOG_POPUP.w))
+	card.add_child(main_margin)
+
+	var main_layout := VBoxContainer.new()
+	main_layout.name = "LogMainLayout"
+	main_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_layout.add_theme_constant_override("separation", GAP_SAVE_LOAD_POPUP_LAYOUT)
+	main_margin.add_child(main_layout)
+
+	# 標題列需要左右 156px 的邊距，以與列表在同一垂直線上對齊金屬邊框內緣
+	var title_margin := MarginContainer.new()
+	title_margin.name = "LogTitleMargin"
+	title_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_margins(title_margin, Vector4(156, 0, 156, 0))
+	main_layout.add_child(title_margin)
+
+	var title_row := HBoxContainer.new()
+	title_row.name = "LogTitleRow"
+	title_row.add_theme_constant_override("separation", GAP_TITLE_ROW)
+	title_margin.add_child(title_row)
+
+	var title := Label.new()
+	title.name = "LogTitleLabel"
+	title.text = "調查紀錄"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_label_style(title, FONT_POPUP_TITLE, COLOR_TEXT_MAIN)
+	title_row.add_child(title)
+
+	# 獨立的關閉按鈕直接放在 dialogue_log_panel 全螢幕 Control 下，以 ANCHOR_SAVE_LOAD_CARD 比例的右上角為基準進行絕對定位，避免加在 PanelContainer (card) 底下時被強制拉伸成全螢幕大小
+	var close_button := _make_small_popup_button("×")
+	close_button.name = "Button_CloseDialogueLog"
+	close_button.add_theme_font_size_override("font_size", FONT_POPUP_CLOSE)
+	close_button.pressed.connect(_close_dialogue_log_popup)
+	close_button.anchor_left = ANCHOR_SAVE_LOAD_CARD.z # 0.94
+	close_button.anchor_top = ANCHOR_SAVE_LOAD_CARD.y  # 0.06
+	close_button.anchor_right = ANCHOR_SAVE_LOAD_CARD.z
+	close_button.anchor_bottom = ANCHOR_SAVE_LOAD_CARD.y
+	close_button.custom_minimum_size = POPUP_CLOSE_BUTTON_SIZE
+	# 由於基準點對齊了卡片右上角比例 (1805, 65)，我們設定偏移量使其往右上微調，懸浮於金屬框外側
+	close_button.offset_left = -120
+	close_button.offset_top = 10
+	close_button.offset_right = -56
+	close_button.offset_bottom = 66
+	dialogue_log_panel.add_child(close_button)
+
+	# 為列表容器包裹一層邊距，將其頂部向下推，使其距離標題列更遠更美觀
+	var scroll_margin := MarginContainer.new()
+	scroll_margin.name = "LogScrollMargin"
+	scroll_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_apply_margins(scroll_margin, Vector4(0, 24, 0, 0))
+	main_layout.add_child(scroll_margin)
 
 	var scroll := ScrollContainer.new()
+	scroll.name = "LogScrollContainer"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size = Vector2(100, 0)
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	layout.add_child(scroll)
+	scroll_margin.add_child(scroll)
 
 	var entries := VBoxContainer.new()
+	entries.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	entries.custom_minimum_size = Vector2(100, 0)
 	entries.add_theme_constant_override("separation", GAP_LOG_ENTRIES)
 	scroll.add_child(entries)
+
+	# 藉由連動 ScrollContainer 的 resized 訊號動態將 entries 的寬度限制在其寬度之內（扣除捲軸裕量 24px），
+	# 徹底避免 Godot ScrollContainer 子節點在自動折行時無法自適應縮小而撐大/溢出左右邊界的問題。
+	scroll.resized.connect(func(): entries.custom_minimum_size.x = scroll.size.x - 24)
 
 	for line in DIALOGUE_LINES:
 		entries.add_child(_make_dialogue_log_entry(line))
@@ -532,18 +809,39 @@ func _close_settings_popup() -> void:
 
 func _open_save_popup() -> void:
 	_hide_all_popups()
-	save_load_title.text = "保存調查檔案"
+	save_load_mode = SAVE_LOAD_MODE_SAVE
+	_refresh_save_load_grid()
 	save_load_panel.visible = true
 
 
 func _open_load_popup() -> void:
 	_hide_all_popups()
-	save_load_title.text = "讀取調查檔案"
+	save_load_mode = SAVE_LOAD_MODE_LOAD
+	_refresh_save_load_grid()
 	save_load_panel.visible = true
 
 
 func _close_save_load_popup() -> void:
 	save_load_panel.visible = false
+
+
+# 讀取模式下空白格不可點擊（避免讀到空資料）；保存模式下所有格子都可點。
+func _refresh_save_load_grid() -> void:
+	var slot_index := 0
+	for slot_data in SAVE_LOAD_SLOT_DATA:
+		var is_saved: bool = slot_data["state"] == SAVE_LOAD_STATE_SAVED
+		var button := save_load_slot_buttons[slot_index]
+		button.disabled = save_load_mode == SAVE_LOAD_MODE_LOAD and not is_saved
+		save_load_selection_frames[slot_index].visible = slot_index == save_load_selected_index
+		slot_index += 1
+
+
+func _on_save_load_slot_pressed(slot_index: int) -> void:
+	save_load_selected_index = slot_index
+	var i := 0
+	for frame in save_load_selection_frames:
+		frame.visible = i == slot_index
+		i += 1
 
 
 func _open_dialogue_log_popup() -> void:
@@ -691,10 +989,14 @@ func _make_framed_button(button_text: String, min_size: Vector2, font_size: int,
 
 func _make_popup_layout(parent: PanelContainer, margins: Vector4, separation: int) -> VBoxContainer:
 	var margin := MarginContainer.new()
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_apply_margins(margin, margins)
 	parent.add_child(margin)
 
 	var layout := VBoxContainer.new()
+	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	layout.add_theme_constant_override("separation", separation)
 	margin.add_child(layout)
 	return layout
@@ -719,6 +1021,21 @@ func _make_popup_title_row(layout: VBoxContainer, title_text: String, close_call
 	return title_row
 
 
+# 存讀檔卡片不需要標題文字（mockup的「保存調查/讀取檔案」是外部觸發鈕，
+# 不是面板內文字），只留右上角關閉鈕讓玩家可以離開面板。
+func _make_close_only_row(layout: VBoxContainer, close_callback: Callable, close_button_name: String) -> HBoxContainer:
+	var close_row := HBoxContainer.new()
+	close_row.alignment = BoxContainer.ALIGNMENT_END
+	layout.add_child(close_row)
+
+	var close_button := _make_small_popup_button("×")
+	close_button.name = close_button_name
+	close_button.add_theme_font_size_override("font_size", FONT_POPUP_CLOSE)
+	close_button.pressed.connect(close_callback)
+	close_row.add_child(close_button)
+	return close_row
+
+
 func _make_volume_row(label_text: String, value: float, changed_callback: Callable) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", GAP_VOLUME_ROW)
@@ -740,65 +1057,35 @@ func _make_volume_row(label_text: String, value: float, changed_callback: Callab
 	return row
 
 
-func _make_save_slot_row(slot_name: String, chapter: String, location: String, state_text: String) -> PanelContainer:
-	var slot := PanelContainer.new()
-	slot.custom_minimum_size = SAVE_SLOT_MIN_SIZE
-	slot.add_theme_stylebox_override("panel", _make_texture_style(PANEL_CASE_OBJECTIVE, STYLE_SLOT_TEXTURE_MARGIN, STYLE_SLOT_CONTENT_MARGIN))
-
-	var margin := MarginContainer.new()
-	_apply_margins(margin, MARGIN_SAVE_SLOT)
-	slot.add_child(margin)
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", GAP_SAVE_SLOT_ROW)
-	margin.add_child(row)
-
-	var info := VBoxContainer.new()
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_theme_constant_override("separation", GAP_SAVE_SLOT_INFO)
-	row.add_child(info)
-
-	var slot_label := Label.new()
-	slot_label.text = slot_name
-	_apply_label_style(slot_label, FONT_SLOT_TITLE, COLOR_ACCENT_GREEN)
-	info.add_child(slot_label)
-
-	var chapter_label := Label.new()
-	chapter_label.text = chapter
-	_apply_label_style(chapter_label, FONT_SLOT_CHAPTER, COLOR_TEXT_BRIGHT)
-	info.add_child(chapter_label)
-
-	var location_label := Label.new()
-	location_label.text = location
-	_apply_label_style(location_label, FONT_SLOT_LOCATION, COLOR_TEXT_MUTED)
-	info.add_child(location_label)
-
-	var action_button := _make_small_popup_button(state_text)
-	action_button.custom_minimum_size = SAVE_SLOT_ACTION_SIZE
-	row.add_child(action_button)
-	return slot
-
-
 func _make_dialogue_log_entry(line: Dictionary) -> PanelContainer:
 	var entry := PanelContainer.new()
-	entry.add_theme_stylebox_override("panel", _make_texture_style(PANEL_CASE_OBJECTIVE, STYLE_LOG_TEXTURE_MARGIN, STYLE_LOG_CONTENT_MARGIN))
+	entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	entry.custom_minimum_size = Vector2(100, 0)
+	entry.add_theme_stylebox_override("panel", _make_flat_panel_style("#141816d0", "#c9d3c633", 1, 4))
 
 	var margin := MarginContainer.new()
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.custom_minimum_size = Vector2(100, 0)
 	_apply_margins(margin, MARGIN_LOG_ENTRY)
 	entry.add_child(margin)
 
 	var layout := VBoxContainer.new()
+	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.custom_minimum_size = Vector2(100, 0)
 	layout.add_theme_constant_override("separation", GAP_LOG_ENTRY_TEXT)
 	margin.add_child(layout)
 
 	var speaker := Label.new()
 	speaker.text = line["speaker_name"] if line.has("speaker_name") else "旁白"
+	speaker.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_apply_label_style(speaker, FONT_LOG_SPEAKER, COLOR_ACCENT_GREEN)
 	layout.add_child(speaker)
 
 	var text := Label.new()
 	text.text = line["text"]
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.custom_minimum_size = Vector2(100, 0) # 避免 Label 最小寬度撐爆 ScrollContainer 邊界，迫使其在容器實際寬度內換行
 	_apply_label_style(text, FONT_LOG_TEXT, COLOR_TEXT_BRIGHT)
 	layout.add_child(text)
 	return entry

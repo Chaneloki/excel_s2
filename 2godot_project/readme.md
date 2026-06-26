@@ -27,8 +27,9 @@ res://02_story_dialogue_ui_demo.tscn
 | `01_excel_simulator_step1_countif.tscn` | Excel解謎器（數據計算儀）第1個零件：COUNTIF原型 scene。 |
 | `01_excel_simulator_step1_countif.gd` | COUNTIF原型的程式邏輯，內部依「設定→建構→輸入處理→運算核心→公式解析」分區，詳見檔案內註解。 |
 | `02_story_dialogue_ui_demo.tscn` | Story Dialogue UI 第2個零件：劇情對話畫面 demo scene。 |
-| `02_story_dialogue_ui_demo.gd` | Story Dialogue UI 的程式邏輯，內部依「設定→建構→輸入處理→彈窗互動→自動播放→對白播放→共用輔助函式」分區，詳見檔案內註解。之後可再拆成 DialogueBox、NamePlate、CharacterSpriteLayer 等更小的子零件。 |
+| `02_story_dialogue_ui_demo.gd` | Story Dialogue UI 的程式邏輯，內部依「設定→建構→輸入處理→彈窗互動→自動播放→對白播放→共用輔助函式」分區，詳見檔案內註解。之後可再拆成 DialogueBox、NamePlate、CharacterSpriteLayer 等更小的子零件。存讀檔彈窗（`SaveLoadPopup_CaseFiles`）已用`1UI/save_load`正式美術零件做出6格案件檔案格，由右上角「保存」「讀取」按鈕共用，依模式決定空白格是否可點擊。 |
 | `assets/ui/story_dialogue/` | Story Dialogue UI 使用的 PNG skin，包括對白框、姓名框、案件目標面板，以及右上角保存/讀取/設定/紀錄/自動五個功能鈕的`button_top_<功能>_<狀態>.png`（每個狀態都是圖示+外框合成好的完整美術圖，來源是`1UI/main_menus/top_menu_ui_normal\|hover\|click`）。 |
+| `assets/ui/save_load/` | 存讀檔彈窗使用的 PNG skin（主面板、空白格、已存檔格、選取高亮框），來源是`1UI/save_load/`，細節見資料夾內README。 |
 | `app_icon.svg` | Godot 專案 icon。 |
 | `.godot/` | Godot 自動產生的專案快取資料夾，不需要手動修改。 |
 
@@ -47,7 +48,7 @@ res://02_story_dialogue_ui_demo.tscn
 - 右上角按鈕：保存、讀取、設定、紀錄、自動
 - 小型案件目標面板，可展開/收合
 - 設定 prototype：BGM / SFX 音量 slider，暫時只保存畫面數值
-- 保存/讀取 prototype：案件簿彈窗與三個存檔格 UI，暫時不寫入實際檔案
+- 保存/讀取 prototype：案件簿彈窗與6個存檔格 UI（套用正式save_load美術，2排x3欄），讀取模式空白格不可點擊，暫時不寫入實際檔案
 - 紀錄 prototype：可滾動調查紀錄彈窗，暫時從 demo 對白生成
 - 自動播放 prototype：按鈕切換自動播放狀態，手動點擊時會關閉
 - Host 透明立繪 prototype
