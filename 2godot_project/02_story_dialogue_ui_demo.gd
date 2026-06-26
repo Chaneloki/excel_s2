@@ -110,6 +110,11 @@ const SHADOW_OFFSET_DIALOGUE := Vector2(2, 2)
 const AUTO_ADVANCE_SECONDS := 2.2
 const BGM_VOLUME_INITIAL := 0.75
 const SFX_VOLUME_INITIAL := 0.80
+
+# 劇情對白打字速度（每個字元的顯示間隔秒數）
+const TYPING_SPEED_CHAR := 0.03
+# 劇情對白打字機動畫的最短總播放時間（秒）
+const TYPING_MIN_DURATION := 0.2
 const SLIDER_MIN_VALUE := 0.0
 const SLIDER_MAX_VALUE := 1.0
 const SLIDER_STEP := 0.01
@@ -233,6 +238,11 @@ const SAVE_LOAD_SLOT_DATA := [
 # ------------------------------
 var current_line_index := 0
 
+# 劇情對白是否正在播放打字動畫中
+var is_typing := false
+# 用於控制打字機顯示比例的 Tween 動畫物件
+var typing_tween: Tween
+
 var name_plate: TextureRect
 var name_label: Label
 var dialogue_label: Label
@@ -287,6 +297,8 @@ func _build_background() -> void:
 	vignette.name = "MoodOverlay_DimEdges"
 	vignette.color = COLOR_VIGNETTE
 	vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# 設為 IGNORE 以免全螢幕暗角遮擋滑鼠並攔截點擊事件，確保點擊可向後傳遞
+	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(vignette)
 
 	var dialogue_shadow := ColorRect.new()
@@ -346,6 +358,8 @@ func _build_dialogue_box() -> void:
 	dialogue_box.name = "DialogueBox"
 	_apply_anchors(dialogue_box, ANCHOR_DIALOGUE_BOX)
 	dialogue_box.add_theme_stylebox_override("panel", _make_texture_style(PANEL_DIALOGUE_BOX, STYLE_DIALOGUE_TEXTURE_MARGIN, STYLE_DIALOGUE_CONTENT_MARGIN))
+	# 設為 PASS，確保點擊對白框面板時，點擊事件會氣泡傳遞到根控制節點的 _unhandled_input()
+	dialogue_box.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(dialogue_box)
 
 	var margin := MarginContainer.new()
@@ -743,6 +757,12 @@ func _build_dialogue_log_popup() -> void:
 # 輸入處理區：玩家操作
 # ------------------------------
 func _unhandled_input(event: InputEvent) -> void:
+	# 點擊防穿透：若有任何彈窗（設定、存讀檔或對話紀錄）正處於開啟顯示狀態，則直接返回，防止穿透點擊推進劇情
+	if (settings_panel != null and settings_panel.visible) or \
+	   (save_load_panel != null and save_load_panel.visible) or \
+	   (dialogue_log_panel != null and dialogue_log_panel.visible):
+		return
+
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_set_auto_advance_enabled(false)
 		_next_line()
@@ -851,7 +871,8 @@ func _build_auto_advance_timer() -> void:
 	auto_advance_timer = Timer.new()
 	auto_advance_timer.name = "AutoAdvanceTimer"
 	auto_advance_timer.wait_time = AUTO_ADVANCE_SECONDS
-	auto_advance_timer.one_shot = false
+	# 修改為 one_shot 計時器，等到每次打字動畫顯示完畢後再重新計算倒數
+	auto_advance_timer.one_shot = true
 	auto_advance_timer.timeout.connect(_on_auto_advance_timeout)
 	add_child(auto_advance_timer)
 
@@ -866,7 +887,9 @@ func _set_auto_advance_enabled(enabled: bool) -> void:
 		return
 
 	if auto_advance_enabled:
-		auto_advance_timer.start()
+		# 若目前不在打字動畫狀態中，則立刻啟動倒數計時器
+		if not is_typing:
+			auto_advance_timer.start()
 	else:
 		auto_advance_timer.stop()
 
@@ -884,10 +907,17 @@ func _on_auto_advance_timeout() -> void:
 # ------------------------------
 func _show_line(index: int) -> void:
 	var line: Dictionary = DIALOGUE_LINES[index]
+	
+	# 若先前有播放中的打字動畫，先將其強行終止
+	if typing_tween != null and typing_tween.is_valid():
+		typing_tween.kill()
+
 	dialogue_label.text = line["text"]
+	dialogue_label.visible_ratio = 0.0
 
 	if line["type"] == "narration":
 		name_plate.visible = false
+		name_label.text = ""
 	else:
 		name_plate.visible = true
 		name_label.text = line["speaker_name"]
@@ -895,8 +925,32 @@ func _show_line(index: int) -> void:
 	if line["type"] == "system":
 		_mark_first_objective_done()
 
+	# 開始打字機逐字播放動畫 (利用 Tween 漸變控制 visible_ratio)
+	is_typing = true
+	var text_length := line["text"].length()
+	# 計算打字動畫時間，並限制其最小時長以防文字過短時播放過快
+	var duration := max(TYPING_MIN_DURATION, text_length * TYPING_SPEED_CHAR)
+	
+	typing_tween = create_tween()
+	typing_tween.tween_property(dialogue_label, "visible_ratio", 1.0, duration).from(0.0)
+	typing_tween.finished.connect(func() -> void:
+		is_typing = false
+		# 字元全部顯示完畢後，若有開啟自動播放，此時才啟動倒數計時器
+		if auto_advance_enabled:
+			auto_advance_timer.start()
+	)
+
 
 func _next_line() -> void:
+	# 若打字動畫仍在播放，點擊立刻跳過動畫直接顯示完整文字
+	if is_typing:
+		if typing_tween != null and typing_tween.is_valid():
+			typing_tween.kill()
+		dialogue_label.visible_ratio = 1.0
+		is_typing = false
+		return
+
+	# 文字已顯示完整時，點擊才會前進至下一句對白
 	current_line_index += 1
 
 	if current_line_index >= DIALOGUE_LINES.size():
