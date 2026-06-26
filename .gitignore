@@ -1,0 +1,13 @@
+# Godot-specific ignores
+.godot/
+2godot_project/.godot/
+
+# Temporary and log files
+*.tmp
+*.log
+scratch/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+desktop.ini
