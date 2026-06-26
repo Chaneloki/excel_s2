@@ -217,7 +217,6 @@ var sfx_volume := SFX_VOLUME_INITIAL
 # 建構區：進入點與主畫面
 # ------------------------------
 func _ready() -> void:
-	push_error("TESTING SCRIPT EXECUTION")
 	_build_ui()
 	_show_line(0)
 
