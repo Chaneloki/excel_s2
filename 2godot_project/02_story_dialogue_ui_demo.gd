@@ -690,24 +690,7 @@ func _build_dialogue_log_popup() -> void:
 	main_layout.add_theme_constant_override("separation", GAP_SAVE_LOAD_POPUP_LAYOUT)
 	main_margin.add_child(main_layout)
 
-	# 標題列需要左右 156px 的邊距，以與列表在同一垂直線上對齊金屬邊框內緣
-	var title_margin := MarginContainer.new()
-	title_margin.name = "LogTitleMargin"
-	title_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_apply_margins(title_margin, Vector4(156, 0, 156, 0))
-	main_layout.add_child(title_margin)
 
-	var title_row := HBoxContainer.new()
-	title_row.name = "LogTitleRow"
-	title_row.add_theme_constant_override("separation", GAP_TITLE_ROW)
-	title_margin.add_child(title_row)
-
-	var title := Label.new()
-	title.name = "LogTitleLabel"
-	title.text = "調查紀錄"
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_apply_label_style(title, FONT_POPUP_TITLE, COLOR_TEXT_MAIN)
-	title_row.add_child(title)
 
 	# 獨立的關閉按鈕直接放在 dialogue_log_panel 全螢幕 Control 下，以 ANCHOR_SAVE_LOAD_CARD 比例的右上角為基準進行絕對定位，避免加在 PanelContainer (card) 底下時被強制拉伸成全螢幕大小
 	var close_button := _make_small_popup_button("×")
