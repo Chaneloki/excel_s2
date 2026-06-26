@@ -268,6 +268,8 @@ var sfx_volume := SFX_VOLUME_INITIAL
 # 建構區：進入點與主畫面
 # ------------------------------
 func _ready() -> void:
+	# 設為 IGNORE，防止根控制節點自身消耗滑鼠點擊，使點擊事件能順利傳遞至 _unhandled_input()
+	self.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build_ui()
 	_show_line(0)
 
@@ -291,6 +293,8 @@ func _build_background() -> void:
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	# 設為 IGNORE，確保背景大圖本身不消耗滑鼠點擊，能使點擊落到背景空白處時正確推進對白
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(background)
 
 	var vignette := ColorRect.new()
