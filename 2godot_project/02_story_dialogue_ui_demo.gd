@@ -549,20 +549,19 @@ func _make_save_load_slot(slot_index: int, slot_data: Dictionary) -> Control:
 	selection_frame.stretch_mode = TextureRect.STRETCH_SCALE
 	selection_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	selection_frame.visible = false
-	# 經過精確圖像分析計算，以使 833x771 大小之高亮框（發光區域 x:72~763, y:55~705）
-	# 能完美對應並包裹對齊 1080x810 卡片中的紙張邊緣：
-	# - 已存檔格子（紙張 x:218~909, y:28~765）：左 0.135, 右 0.906, 上 -0.042, 下 1.037
-	# - 空白格子（紙張 x:206~897, y:49~720）：左 0.124, 右 0.895, 上 -0.010, 下 0.973
+	# 經過精確圖像分析與拉伸調整，使 833x771 選取框的發光邊緣能完美在外側包裹對齊 480x360 卡片中的紙張邊緣：
+	# - 已存檔格子：左 0.110, 右 0.930, 上 -0.060, 下 1.060
+	# - 空白格子：左 0.100, 右 0.920, 上 -0.030, 下 1.000
 	if is_saved:
-		selection_frame.anchor_left = 0.135
-		selection_frame.anchor_right = 0.906
-		selection_frame.anchor_top = -0.042
-		selection_frame.anchor_bottom = 1.037
+		selection_frame.anchor_left = 0.110
+		selection_frame.anchor_right = 0.930
+		selection_frame.anchor_top = -0.060
+		selection_frame.anchor_bottom = 1.060
 	else:
-		selection_frame.anchor_left = 0.124
-		selection_frame.anchor_right = 0.895
-		selection_frame.anchor_top = -0.010
-		selection_frame.anchor_bottom = 0.973
+		selection_frame.anchor_left = 0.100
+		selection_frame.anchor_right = 0.920
+		selection_frame.anchor_top = -0.030
+		selection_frame.anchor_bottom = 1.000
 	selection_frame.offset_left = 0
 	selection_frame.offset_top = 0
 	selection_frame.offset_right = 0
