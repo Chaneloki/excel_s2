@@ -927,9 +927,9 @@ func _show_line(index: int) -> void:
 
 	# 開始打字機逐字播放動畫 (利用 Tween 漸變控制 visible_ratio)
 	is_typing = true
-	var text_length := line["text"].length()
+	var text_length: int = (line["text"] as String).length()
 	# 計算打字動畫時間，並限制其最小時長以防文字過短時播放過快
-	var duration := max(TYPING_MIN_DURATION, text_length * TYPING_SPEED_CHAR)
+	var duration: float = max(TYPING_MIN_DURATION, text_length * TYPING_SPEED_CHAR)
 	
 	typing_tween = create_tween()
 	typing_tween.tween_property(dialogue_label, "visible_ratio", 1.0, duration).from(0.0)
