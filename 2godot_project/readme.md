@@ -67,6 +67,19 @@ res://02_story_dialogue_ui_demo.tscn
 
 ---
 
+## Map Walker 技術路線（已定案）
+
+曾經試做過「3D box-out場景 + 第一人稱固定觀察點」（`03_map_walker_3d_lite_demo`）
+驗證NPC比例問題，但實測發現門/旗幟/展示桌這類2D插畫貼上3D幾何後，視覺上仍有明顯
+「貼紙感」，品質天花板不夠高，**該demo已移除**。
+
+Map Walker正式定案改用**純2D環境插畫＋熱點彈出特寫卡**：畫面是一張完整的AI生成
+場景插畫（不放玩家自己的avatar，因此不需要處理avatar比例問題），玩家點擊熱點
+（放大鏡icon）後彈出對應的特寫卡片。場景插畫見`3case/case1_bg/`，多機位9宮格
+（鏡位備選）見`3case/case1_bg_grid9/`，生成prompt見`3case/case1_bg_prompts_flat_v1.md`。
+
+---
+
 ## 怎麼打開
 
 1. 打開 Godot。
@@ -92,9 +105,9 @@ res://02_story_dialogue_ui_demo.tscn
 建議之後新零件依此規則命名：
 
 - `03_excel_simulator_step2_sumif.gd` / `.tscn`
-- `04_map_walker_demo.gd` / `.tscn`
-- `05_save_load_ui_demo.gd` / `.tscn`
-- `06_settings_ui_demo.gd` / `.tscn`
+- `04_save_load_ui_demo.gd` / `.tscn`
+- `05_settings_ui_demo.gd` / `.tscn`
+- `06_map_walker_demo.gd` / `.tscn`（純2D環境插畫+熱點彈出特寫卡版本）
 
 ---
 
