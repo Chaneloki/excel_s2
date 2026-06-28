@@ -230,7 +230,8 @@ cyberpunk全息、華麗魔法少女、普通RPG道具欄。
 | 零件 | 狀態 | 說明 |
 |---|---|---|
 | 美術/UI風格指南 | ✅ 已定稿v0.1 | 見 [0mockup](0mockup)，6大畫面mockup + UI/角色風格規則文件 |
-| Excel解謎器 - COUNTIF原型 | ✅ 已完成 | `01_excel_simulator_step1_countif.*`，見 [2godot_project](2godot_project)，假資料測試，已驗證輸入/運算/錯誤提示流程 |
+| Excel解謎器 - COUNTIF原型 | 🔶 Mockup精準重建中（第1、2批素材已接上，第3批未做） | `01_excel_simulator_step1_countif.*`，見 [2godot_project](2godot_project)，公式邏輯/選取/拖曳填滿已驗證可動；視覺正依`excel_solver_ui_mockup.png`重建，目前完成頂部列、左側面板、公式列、右側案件目標/公式提示框，剩圖示與互動狀態收尾（第3批：圖示與底部提示框） |
+| UI運行時調校工具（debug用，非正式遊戲零件） | ✅ 已完成 | `05_ui_tweaker_tool.*`，見 [2godot_project](2godot_project)，可即時調整任何Control節點Position/Size/Scale並複製參數，用於輔助校正Vibe Coding寫死的座標數值 |
 | Story Dialogue UI 零件 | 🔶 v0.1進行中 | `02_story_dialogue_ui_demo.*`，規格見 story_dialogue_ui_component_spec_v0.1.md，目前是暫時單檔prototype，之後拆成DialogueBox/NamePlate/CharacterSpriteLayer等子零件 |
 | Excel解謎器 - SUMIF / VLOOKUP / INDEX+MATCH / 日期 / 文本函數 | ⏳ 未開始 | 沿用COUNTIF的`_parse_xxx`/`_evaluate_xxx`模式逐個擴充 |
 | 地圖走查系統 - 2D熱點原型 | ✅ 已完成 | `03_map_walker_hotspot_demo.*`，見 [2godot_project](2godot_project)，純2D環境插畫+熱點彈出特寫卡機制已驗證可動，內容為占位文字，尚未串接案件1真實熱點/特寫卡素材 |
@@ -291,3 +292,4 @@ cyberpunk全息、華麗魔法少女、普通RPG道具欄。
 - [ ] 第一章劇情大綱/劇本（host背景、案件1內容已有世界觀與人設基礎，仍待具體劇本）
 - [ ] 案件1的具體謎底與所需Excel函數對照
 - [ ] Story Dialogue UI demo 的對白資料格式定案後，跟案件資料結構怎麼串接
+- [ ] Excel解謎器Mockup精準重建第3批素材（六個公式圖示＋底部提示框/徽章）未做，詳見 [2godot_project/readme.md](2godot_project/readme.md) 與 [2godot_project/assets/ui/excel_solver/readme.md](2godot_project/assets/ui/excel_solver/readme.md) 的進度記錄

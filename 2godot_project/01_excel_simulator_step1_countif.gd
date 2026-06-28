@@ -175,22 +175,41 @@ const FILL_HANDLE_SIZE = Vector2(10, 10)
 const DEFAULT_FILLER_COLUMN_WIDTH := 110
 const PAGE_MARGIN = 20
 const SECTION_SPACING = 12
-const TITLE_FONT_SIZE = 20
+const TITLE_FONT_SIZE = 24  # 原本20，頂部「數據計算儀」標題字級
 const HINT_FONT_SIZE = 16
-const RESULT_FONT_SIZE = 18
+const RESULT_FONT_SIZE = 16  # 原本18，底部系統提示字級
 const PLACEHOLDER_FONT_SIZE = 16
 const HEADER_FONT_SIZE = 20
 const CELL_FONT_SIZE = 20
-const SELECTION_INFO_FONT_SIZE = 15
+const SELECTION_INFO_FONT_SIZE = 14  # 原本15，底部「目前選取」字級
 const SIDEBAR_TITLE_FONT_SIZE = 23  # 原本17，加大「案件資料」標題字級
 const SIDEBAR_TAB_FONT_SIZE = 18
-const OBJECTIVE_FONT_SIZE = 16
-const FORMULA_HINT_NAME_FONT_SIZE = 17
-const FORMULA_HINT_DESC_FONT_SIZE = 13
+const OBJECTIVE_FONT_SIZE = 18  # 原本16，案件目標項目文字字級
+const FORMULA_HINT_NAME_FONT_SIZE = 18  # 原本17，公式提示函數名稱字級
+const FORMULA_HINT_DESC_FONT_SIZE = 16  # 原本13，公式提示說明文字字級
 const LOCKED_BORDER_WIDTH = 1
 const EDITABLE_BORDER_WIDTH = 2
 const TOP_BAR_HEIGHT = 88
 const BOTTOM_BAR_HEIGHT = 56
+# 以下是今天Mockup精準重建時新增、原本直接寫死在各_build_xxx()函式裡
+# 的版面數字，統一搬到這裡集中管理（嚴格規則7：版面數字禁止散落）。
+const TOP_BAR_FRAME_MARGIN_H := 110.0
+const TOP_BAR_FRAME_MARGIN_V := 36.0
+const CHAPTER_LABEL_FONT_SIZE := 18
+const TITLE_BADGE_SIZE := Vector2(44, 44)
+const TOP_BAR_TITLE_GAP := 10.0
+const TOP_BAR_INNER_MARGIN := PAGE_MARGIN
+const BOTTOM_BAR_CONTENT_MARGIN := 30.0
+const SIDEBAR_TITLE_HEIGHT := 50.0
+const DIVIDER_LINE_HEIGHT := 1.0
+const FORMULA_BOX_INNER_MARGIN := 16.0
+const FORMULA_BOX_FONT_SIZE := 18
+const FX_LABEL_WIDTH := 48.0
+const RIGHT_SIDEBAR_OUTER_MARGIN_H := 10.0
+const RIGHT_SIDEBAR_OUTER_MARGIN_V := 16.0
+const SIDEBAR_CARD_INNER_MARGIN := 16.0
+const SIDEBAR_CARD_TITLE_FONT_SIZE := 22
+const HINT_ITEM_SPACING := 10.0
 const LEFT_SIDEBAR_WIDTH = 300  # 原本230，加大讓分類按鈕（寬高依此反推）更舒展、不會看起來太瘦小
 # 原本270->320都還是太窄：右側主框邊框自己吃掉RIGHT_SIDEBAR_TEXTURE_
 # MARGIN_H*2=110px，案件目標/公式提示卡片框邊框又各吃掉CASE_OBJECTIVE_
@@ -223,9 +242,10 @@ const SIDEBAR_PANEL_TEXTURE_MARGIN_V := 60.0
 const CATEGORY_BUTTON_TEXTURE_ASPECT := 4.8
 # 子節點實際可用寬度現在是看content_margin（texture_margin*CONTENT_
 # MARGIN_RATIO），不是整段texture_margin——這裡要用同一個算法，不然
-# 按鈕底圖會比容器寬度算少，蓋到面板右邊框。多扣16px當緩衝，按鈕跟
-# 邊框之間留一點呼吸空間。
-const CATEGORY_BUTTON_WIDTH := LEFT_SIDEBAR_WIDTH - (SIDEBAR_PANEL_TEXTURE_MARGIN_H * CONTENT_MARGIN_RATIO) * 2 - 16.0
+# 按鈕底圖會比容器寬度算少，蓋到面板右邊框。CATEGORY_BUTTON_RIGHT_GAP
+# 是額外留的緩衝，確保按鈕跟邊框之間留一點呼吸空間。
+const CATEGORY_BUTTON_RIGHT_GAP := 16.0
+const CATEGORY_BUTTON_WIDTH := LEFT_SIDEBAR_WIDTH - (SIDEBAR_PANEL_TEXTURE_MARGIN_H * CONTENT_MARGIN_RATIO) * 2 - CATEGORY_BUTTON_RIGHT_GAP
 # 底圖本身的「不變形」高度（寬度/寬高比算出來的），STRETCH_KEEP_ASPECT_CENTERED
 # 會照這個高度畫底圖、不會因為按鈕容器更高而被拉伸；CATEGORY_BUTTON_HEIGHT
 # 才是按鈕容器實際的高度，多出來的CATEGORY_BUTTON_EXTRA_HEIGHT只是讓
@@ -415,26 +435,26 @@ func _ready() -> void:
 	body_hbox.add_child(_build_right_sidebar())
 
 	var bottom_panel = PanelContainer.new()
-	bottom_panel.custom_minimum_size = Vector2(0, 50)
+	bottom_panel.custom_minimum_size = Vector2(0, BOTTOM_BAR_HEIGHT)
 	bottom_panel.add_theme_stylebox_override("panel", _make_border_stylebox(Color(COLOR_PANEL_HEADER), Color(COLOR_LINE_SILVER), 1))
-	
+
 	var bottom_hbox = HBoxContainer.new()
 	bottom_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	
+
 	result_label = Label.new()
 	result_label.name = "ResultLabel"
 	result_label.text = "目前請使用 COUNTIF 檢查證言狀態。"
-	_apply_label_style(result_label, 16, COLOR_TEXT_MAIN)
+	_apply_label_style(result_label, RESULT_FONT_SIZE, COLOR_TEXT_MAIN)
 	bottom_hbox.add_child(result_label)
-	
+
 	selection_info_label = Label.new()
 	selection_info_label.name = "SelectionInfoLabel"
 	selection_info_label.text = "  |  目前選取：（無）"
-	_apply_label_style(selection_info_label, 14, COLOR_TEXT_MUTED)
+	_apply_label_style(selection_info_label, SELECTION_INFO_FONT_SIZE, COLOR_TEXT_MUTED)
 	bottom_hbox.add_child(selection_info_label)
 
 	var bottom_margin = MarginContainer.new()
-	bottom_margin.add_theme_constant_override("margin_left", 30)
+	bottom_margin.add_theme_constant_override("margin_left", BOTTOM_BAR_CONTENT_MARGIN)
 	bottom_margin.add_child(bottom_hbox)
 	bottom_panel.add_child(bottom_margin)
 	root_vbox.add_child(bottom_panel)
@@ -449,29 +469,29 @@ func _build_top_bar() -> PanelContainer:
 	var panel = PanelContainer.new()
 	panel.custom_minimum_size = Vector2(0, TOP_BAR_HEIGHT)
 	var top_bar_texture = load(PANEL_TOP_BAR_MAIN)
-	panel.add_theme_stylebox_override("panel", _make_texture_style(top_bar_texture, 0.0, 110.0, 36.0))
+	panel.add_theme_stylebox_override("panel", _make_texture_style(top_bar_texture, 0.0, TOP_BAR_FRAME_MARGIN_H, TOP_BAR_FRAME_MARGIN_V))
 
 	var hbox = HBoxContainer.new()
 	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 20)
-	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_left", TOP_BAR_INNER_MARGIN)
+	margin.add_theme_constant_override("margin_right", TOP_BAR_INNER_MARGIN)
 	margin.add_child(hbox)
 	panel.add_child(margin)
 
 	var badge = TextureRect.new()
 	badge.texture = load(BADGE_TITLE_CALCULATOR)
-	badge.custom_minimum_size = Vector2(44, 44)
+	badge.custom_minimum_size = TITLE_BADGE_SIZE
 	badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	badge.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	hbox.add_child(badge)
 
 	var title_gap = Control.new()
-	title_gap.custom_minimum_size = Vector2(10, 0)
+	title_gap.custom_minimum_size = Vector2(TOP_BAR_TITLE_GAP, 0)
 	hbox.add_child(title_gap)
 
 	var title = Label.new()
 	title.text = "數據計算儀"
-	_apply_label_style(title, 24, COLOR_TEXT_BRIGHT)
+	_apply_label_style(title, TITLE_FONT_SIZE, COLOR_TEXT_BRIGHT)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	hbox.add_child(title)
 
@@ -495,7 +515,7 @@ func _build_top_bar() -> PanelContainer:
 
 	var subtitle = Label.new()
 	subtitle.text = "第1章：第一份委託"
-	_apply_label_style(subtitle, 18, COLOR_TEXT_MUTED)
+	_apply_label_style(subtitle, CHAPTER_LABEL_FONT_SIZE, COLOR_TEXT_MUTED)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	subtitle.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -553,13 +573,13 @@ func _build_left_sidebar() -> PanelContainer:
 	var title = Label.new()
 	title.text = "案件資料"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.custom_minimum_size = Vector2(0, 50)
+	title.custom_minimum_size = Vector2(0, SIDEBAR_TITLE_HEIGHT)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_apply_label_style(title, SIDEBAR_TITLE_FONT_SIZE, COLOR_TEXT_BRIGHT)
 	vbox.add_child(title)
 
 	var line = ColorRect.new()
-	line.custom_minimum_size = Vector2(0, 1)
+	line.custom_minimum_size = Vector2(0, DIVIDER_LINE_HEIGHT)
 	line.color = Color(COLOR_LINE_SILVER)
 	vbox.add_child(line)
 
@@ -652,13 +672,13 @@ func _build_center_area() -> Control:
 	var center_vbox = VBoxContainer.new()
 	center_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	center_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	center_vbox.add_theme_constant_override("separation", 20)
+	center_vbox.add_theme_constant_override("separation", PAGE_MARGIN)
 
 	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 20)
-	margin.add_theme_constant_override("margin_top", 20)
-	margin.add_theme_constant_override("margin_right", 20)
-	margin.add_theme_constant_override("margin_bottom", 20)
+	margin.add_theme_constant_override("margin_left", PAGE_MARGIN)
+	margin.add_theme_constant_override("margin_top", PAGE_MARGIN)
+	margin.add_theme_constant_override("margin_right", PAGE_MARGIN)
+	margin.add_theme_constant_override("margin_bottom", PAGE_MARGIN)
 	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_child(center_vbox)
@@ -676,8 +696,8 @@ func _build_center_area() -> Control:
 	center_vbox.add_child(formula_panel)
 
 	var formula_margin = MarginContainer.new()
-	formula_margin.add_theme_constant_override("margin_left", 16)
-	formula_margin.add_theme_constant_override("margin_right", 16)
+	formula_margin.add_theme_constant_override("margin_left", FORMULA_BOX_INNER_MARGIN)
+	formula_margin.add_theme_constant_override("margin_right", FORMULA_BOX_INNER_MARGIN)
 	formula_panel.add_child(formula_margin)
 
 	var formula_box = HBoxContainer.new()
@@ -685,8 +705,8 @@ func _build_center_area() -> Control:
 
 	var fx_label = Label.new()
 	fx_label.text = "公式"
-	_apply_label_style(fx_label, 18, COLOR_TEXT_MAIN)
-	fx_label.custom_minimum_size = Vector2(48, 0)
+	_apply_label_style(fx_label, FORMULA_BOX_FONT_SIZE, COLOR_TEXT_MAIN)
+	fx_label.custom_minimum_size = Vector2(FX_LABEL_WIDTH, 0)
 	fx_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	formula_box.add_child(fx_label)
 
@@ -694,7 +714,7 @@ func _build_center_area() -> Control:
 	formula_input.placeholder_text = "=COUNTIF(...)"
 	formula_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	formula_input.name = "FormulaInput"
-	formula_input.add_theme_font_size_override("font_size", 18)
+	formula_input.add_theme_font_size_override("font_size", FORMULA_BOX_FONT_SIZE)
 	formula_input.add_theme_color_override("font_color", Color(COLOR_TEXT_BRIGHT))
 	formula_input.add_theme_color_override("caret_color", Color(COLOR_TEXT_BRIGHT))
 	# 外面已經有公式列外框畫邊線了，這裡不再疊一層淺色細框，只用透明
@@ -772,7 +792,7 @@ func _build_objective_row(text: String, status: String, text_color: String) -> H
 
 	var label = Label.new()
 	label.text = text
-	_apply_label_style(label, 18, text_color)
+	_apply_label_style(label, OBJECTIVE_FONT_SIZE, text_color)
 	row.add_child(label)
 
 	return row
@@ -787,14 +807,14 @@ func _build_right_sidebar() -> PanelContainer:
 	# 內距縮小一點（原本20px），案件目標/公式提示卡片框才能更貼近外層
 	# 主框的寬度，不會看起來小一圈。
 	var outer_margin = MarginContainer.new()
-	outer_margin.add_theme_constant_override("margin_left", 10)
-	outer_margin.add_theme_constant_override("margin_top", 16)
-	outer_margin.add_theme_constant_override("margin_right", 10)
-	outer_margin.add_theme_constant_override("margin_bottom", 16)
+	outer_margin.add_theme_constant_override("margin_left", RIGHT_SIDEBAR_OUTER_MARGIN_H)
+	outer_margin.add_theme_constant_override("margin_top", RIGHT_SIDEBAR_OUTER_MARGIN_V)
+	outer_margin.add_theme_constant_override("margin_right", RIGHT_SIDEBAR_OUTER_MARGIN_H)
+	outer_margin.add_theme_constant_override("margin_bottom", RIGHT_SIDEBAR_OUTER_MARGIN_V)
 	panel.add_child(outer_margin)
 
 	var outer_vbox = VBoxContainer.new()
-	outer_vbox.add_theme_constant_override("separation", 20)
+	outer_vbox.add_theme_constant_override("separation", PAGE_MARGIN)
 	outer_margin.add_child(outer_vbox)
 
 	# ---- 案件目標框 ----
@@ -805,19 +825,19 @@ func _build_right_sidebar() -> PanelContainer:
 	outer_vbox.add_child(objective_panel)
 
 	var objective_margin = MarginContainer.new()
-	objective_margin.add_theme_constant_override("margin_left", 16)
-	objective_margin.add_theme_constant_override("margin_top", 16)
-	objective_margin.add_theme_constant_override("margin_right", 16)
-	objective_margin.add_theme_constant_override("margin_bottom", 16)
+	objective_margin.add_theme_constant_override("margin_left", SIDEBAR_CARD_INNER_MARGIN)
+	objective_margin.add_theme_constant_override("margin_top", SIDEBAR_CARD_INNER_MARGIN)
+	objective_margin.add_theme_constant_override("margin_right", SIDEBAR_CARD_INNER_MARGIN)
+	objective_margin.add_theme_constant_override("margin_bottom", SIDEBAR_CARD_INNER_MARGIN)
 	objective_panel.add_child(objective_margin)
 
 	var objective_vbox = VBoxContainer.new()
-	objective_vbox.add_theme_constant_override("separation", 10)
+	objective_vbox.add_theme_constant_override("separation", HINT_ITEM_SPACING)
 	objective_margin.add_child(objective_vbox)
 
 	var title_obj = Label.new()
 	title_obj.text = "案件目標"
-	_apply_label_style(title_obj, 22, COLOR_TEXT_BRIGHT)
+	_apply_label_style(title_obj, SIDEBAR_CARD_TITLE_FONT_SIZE, COLOR_TEXT_BRIGHT)
 	objective_vbox.add_child(title_obj)
 
 	objective_vbox.add_child(_build_objective_row("找出證言矛盾", "pending", COLOR_TEXT_MAIN))
@@ -832,10 +852,10 @@ func _build_right_sidebar() -> PanelContainer:
 	outer_vbox.add_child(hint_panel)
 
 	var hint_margin = MarginContainer.new()
-	hint_margin.add_theme_constant_override("margin_left", 16)
-	hint_margin.add_theme_constant_override("margin_top", 16)
-	hint_margin.add_theme_constant_override("margin_right", 16)
-	hint_margin.add_theme_constant_override("margin_bottom", 16)
+	hint_margin.add_theme_constant_override("margin_left", SIDEBAR_CARD_INNER_MARGIN)
+	hint_margin.add_theme_constant_override("margin_top", SIDEBAR_CARD_INNER_MARGIN)
+	hint_margin.add_theme_constant_override("margin_right", SIDEBAR_CARD_INNER_MARGIN)
+	hint_margin.add_theme_constant_override("margin_bottom", SIDEBAR_CARD_INNER_MARGIN)
 	hint_panel.add_child(hint_margin)
 
 	var hint_vbox = VBoxContainer.new()
@@ -854,7 +874,7 @@ func _build_right_sidebar() -> PanelContainer:
 
 	var title_hint = Label.new()
 	title_hint.text = "公式提示"
-	_apply_label_style(title_hint, 22, COLOR_TEXT_BRIGHT)
+	_apply_label_style(title_hint, SIDEBAR_CARD_TITLE_FONT_SIZE, COLOR_TEXT_BRIGHT)
 	hint_vbox.add_child(title_hint)
 
 	var hints = [
@@ -867,15 +887,15 @@ func _build_right_sidebar() -> PanelContainer:
 		var hb = VBoxContainer.new()
 		var l1 = Label.new()
 		l1.text = h["f"]
-		_apply_label_style(l1, 18, COLOR_TEXT_BRIGHT)
+		_apply_label_style(l1, FORMULA_HINT_NAME_FONT_SIZE, COLOR_TEXT_BRIGHT)
 		var l2 = Label.new()
 		l2.text = h["d"]
-		_apply_label_style(l2, 16, COLOR_TEXT_MUTED)
+		_apply_label_style(l2, FORMULA_HINT_DESC_FONT_SIZE, COLOR_TEXT_MUTED)
 		hb.add_child(l1)
 		hb.add_child(l2)
 		hint_vbox.add_child(hb)
 		var s = Control.new()
-		s.custom_minimum_size = Vector2(0, 10)
+		s.custom_minimum_size = Vector2(0, HINT_ITEM_SPACING)
 		hint_vbox.add_child(s)
 
 	return panel
