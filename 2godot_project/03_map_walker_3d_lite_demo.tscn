@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://c28hd0mq07gyv"]
+
+[ext_resource type="Script" path="res://03_map_walker_3d_lite_demo.gd" id="1"]
+
+[node name="MapWalker3DLiteDemo" type="Node3D" unique_id=782442685]
+script = ExtResource("1")

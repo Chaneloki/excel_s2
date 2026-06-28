@@ -1,14 +1,17 @@
 # 案件一 NPC 角色設定圖／立繪生成 Prompt 清單
 
 本文件整理案件一劇本（[case1_setting_v1.pdf](case1_setting_v1.pdf)）裡需要美術定案的
-NPC角色prompt。優先處理**塔克、席默**——這兩位會出現在展示廳・主展場（D1）的
-第一人稱固定觀察點走查場景，是目前Map Walker零件最大的美術缺口。艾維斯／瑞娜／貝洛特
-三位（出現在B商會接待室、D2洽談室、E旅館茶室）之後再補。
+NPC角色prompt。塔克、席默（出現在展示廳・主展場D1）優先完成，艾維斯／瑞娜／貝洛特
+三位（出現在B商會接待室、D2洽談室、E旅館茶室）的prompt也已補上，等候生圖與審核。
 
-**狀態**：塔克、席默的角色設定圖＋立繪皆已完成並通過審核
-（[1char_setting/case1_npc/](../1char_setting/case1_npc/)、
-[1char/case1_npc/](../1char/case1_npc/)），服裝/髮型/配色在兩張圖之間一致，
-且都正確遵守「淡綠光僅限數據計算儀」規則（席默的量測儀器用藍光）。
+**狀態**：
+- 塔克、席默的角色設定圖＋立繪皆已完成並通過審核
+  （[1char_setting/case1_npc/](../1char_setting/case1_npc/)、
+  [1char/case1_npc/](../1char/case1_npc/)），服裝/髮型/配色在兩張圖之間一致，
+  且都正確遵守「淡綠光僅限數據計算儀」規則（席默的量測儀器用藍光）。
+- 貝洛特、艾維斯、瑞娜：prompt已寫好（見下方），尚未生圖/審核。貝洛特優先度最高
+  （場景⑨對質戲靈魂角色，已準備4種表情差分prompt），艾維斯、瑞娜各只需1張立繪
+  （情緒線單一，暫不需要表情差分）。
 
 美術風格錨點對齊 [0mockup/character_style_guide_v0.1.md](../0mockup/character_style_guide_v0.1.md)：
 半寫實2.5D、貴族偵探×魔法資料學×安靜懸疑的世界觀下，**階級用服裝材質與細節表現**，
@@ -82,13 +85,99 @@ semi-realistic 2.5D Korean game character illustration, head-and-chest bust port
 
 ---
 
-## 待補（之後再做）
+## 貝洛特（Belot）— 場景⑨真兇
 
-- **艾維斯（Aldric）**：62歲，克雷斯商會辦事處負責人，謹慎保守、說話慢條斯理，
-  習慣思考時用手指敲桌子。出現於B場景②、⑦、E場景⑧的部分。貴族/中產商人混合定位。
-- **瑞娜（Rina）**：26歲，獨立工匠，設計圖持有人，身材纖細、手指有工匠老繭，眼神
-  銳利。出現於D2附近（場景⑤）跟⑩收尾。學者/魔法技術者定位，但比席默更獨立自尊。
-- **貝洛特（Belot）**：42歲，真正的竊賊，西裝筆挺、頭髮梳得整齊、說話客氣但眼神
-  總在觀察。出現於E旅館對質場景⑨，是全案表情演出最重的角色，**需要至少4種表情
-  差分的立繪**（得體假笑、太鎮定、裂縫僵硬、沉默警告），優先度應在艾維斯/瑞娜之後、
-  正式進入場景⑨製作前完成。這三位也都需要先做角色設定圖（3視圖），再延伸出立繪。
+人物卡依據：42歲，真正的竊賊，名冊上身份是「採購商代表」，實際受維德商行指使。
+西裝筆挺、頭髮梳得整齊、說話客氣但眼神總在觀察。劇本場景⑨對質戲的靈魂角色，
+全案表情演出最重，**需要至少4種表情差分**：得體假笑、太鎮定、裂縫僵硬、沉默警告。
+
+**階級視覺定位**：依角色風格指南第5節「商人/委託人」——表面打扮成有錢的採購商，
+整潔且飾品偏亮（顯示是花錢打點出來的體面，不是世代貴族的沉穩），西裝剪裁精準但
+細節處可以有一點過度修飾的痕跡，呼應劇本「得體像一層上過漆的木頭，光滑，卻摸不出
+底下的紋路」的描寫。
+
+### 1. 角色設定圖（3視圖）
+
+```
+character design reference sheet, semi-realistic 2.5D Korean game character illustration, western fantasy detective world, mature visual novel character, grounded magic setting, white background, one close-up face portrait on the left side plus three full-body views on the right side (front view, 3/4 side view, back view), identical outfit and proportions across all views, detailed fabric texture, clean lines, soft studio lighting, professional concept art quality, no text, no watermark, not anime, not chibi, a 42-year-old male posing as a wealthy merchant procurement representative, neat trim build, impeccably groomed slicked-back dark hair, smooth composed face with a polished practiced smile that never quite reaches the eyes, watchful calculating gaze, sharply tailored formal suit in dark tones with a faintly too-polished sheen, an expensive but slightly ostentatious cufflink and ring (money rather than generations of inherited wealth), crisp pocket square, immaculately clean manicured hands, neutral calm default expression, restrained magic aesthetic with no visible magic effects on him, not gothic horror, not photorealistic photography, not a 3D render
+```
+
+### 2. 立繪（頭到胸口半身像，4種表情差分）
+
+**差分①　得體假笑**（社交場合的標準表情，光滑得體但沒有溫度）：
+
+```
+semi-realistic 2.5D Korean game character illustration, head-and-chest bust portrait, close-up framing cropped at the chest, western fantasy detective world, mature visual novel character, white or transparent background, same outfit and design as the character reference sheet, a 42-year-old male posing as a wealthy merchant procurement representative, impeccably groomed slicked-back dark hair, sharply tailored dark suit, a polished practiced courteous smile that does not reach the eyes, smooth composed expression, watchful calculating gaze beneath the smile, detailed fabric texture, clean lines, soft cinematic lighting, professional concept art quality, no text, no watermark, not anime, not chibi, not photorealistic photography, not a 3D render
+```
+
+**差分②　太鎮定**（聽到敏感問題時刻意維持的過度平靜，像放太久的茶）：
+
+```
+semi-realistic 2.5D Korean game character illustration, head-and-chest bust portrait, close-up framing cropped at the chest, western fantasy detective world, mature visual novel character, white or transparent background, same outfit and design as the character reference sheet, a 42-year-old male posing as a wealthy merchant procurement representative, impeccably groomed slicked-back dark hair, sharply tailored dark suit, an unnervingly flat and overly composed expression, eyes unusually still and unblinking, smile fading into neutral stillness, subtle controlled tension just beneath an otherwise unreadable surface, detailed fabric texture, clean lines, soft cinematic lighting, professional concept art quality, no text, no watermark, not anime, not chibi, not photorealistic photography, not a 3D render
+```
+
+**差分③　裂縫僵硬**（被點破身份瞬間，得體的表情第一次裂開）：
+
+```
+semi-realistic 2.5D Korean game character illustration, head-and-chest bust portrait, close-up framing cropped at the chest, western fantasy detective world, mature visual novel character, white or transparent background, same outfit and design as the character reference sheet, a 42-year-old male posing as a wealthy merchant procurement representative, impeccably groomed slicked-back dark hair, sharply tailored dark suit, a sudden stiff frozen posture, the polished smile cracking slightly at one corner, eyes widening just a fraction with poorly suppressed alarm, knuckles faintly whitening, the practiced composure visibly slipping for the first time, detailed fabric texture, clean lines, soft cinematic lighting, professional concept art quality, no text, no watermark, not anime, not chibi, not photorealistic photography, not a 3D render
+```
+
+**差分④　沉默警告**（交出設計圖後，留下最後一句警告時的眼神）：
+
+```
+semi-realistic 2.5D Korean game character illustration, head-and-chest bust portrait, close-up framing cropped at the chest, western fantasy detective world, mature visual novel character, white or transparent background, same outfit and design as the character reference sheet, a 42-year-old male posing as a wealthy merchant procurement representative, impeccably groomed slicked-back dark hair, sharply tailored dark suit now slightly less immaculate, no trace of the earlier smile, a quiet defeated but stubbornly defiant gaze, a low warning intensity in the eyes, jaw set, composed but cold, detailed fabric texture, clean lines, soft cinematic lighting, professional concept art quality, no text, no watermark, not anime, not chibi, not photorealistic photography, not a 3D render
+```
+
+---
+
+## 艾維斯（Aldric）— 克雷斯商會辦事處負責人
+
+人物卡依據：62歲，謹慎保守、說話慢條斯理，習慣思考時用手指敲桌子，渾濁的眼睛、
+佈滿皺紋的手。出現於B場景②（接案）、⑦（走廊片段）、E場景⑧（費用申報）。
+**貴族/中產商人混合定位**：不是世代貴族，是靠資歷跟人脈撐起來的資深商會負責人。
+
+**階級視覺定位**：依角色風格指南第5節「商人/委託人」（資深、有錢者）與「貴族」
+之間——服裝沉穩保守、剪裁傳統，飾品低調但確實高級（銀懷錶、印章戒指），不追新潮，
+牆上掛著魔法器具專利證書暗示他長年處理商會專利事務。
+
+### 1. 角色設定圖（3視圖）
+
+```
+character design reference sheet, semi-realistic 2.5D Korean game character illustration, western fantasy detective world, mature visual novel character, grounded magic setting, white background, one close-up face portrait on the left side plus three full-body views on the right side (front view, 3/4 side view, back view), identical outfit and proportions across all views, detailed fabric texture, clean lines, soft studio lighting, professional concept art quality, no text, no watermark, not anime, not chibi, a 62-year-old male senior merchant guild office director, solidly built with stooped cautious posture, deeply lined weathered face, heavy-lidded watchful eyes, neatly combed thinning grey hair, conservative old-fashioned formal long coat in dark muted tones with subtle silver trim, a low-key but evidently fine silver pocket watch chain and a signet ring as his signature props, hands posed mid-gesture as if tapping a table, deliberate unhurried bearing, restrained magic aesthetic with no visible magic effects on him, not gothic horror, not photorealistic photography, not a 3D render
+```
+
+### 2. 立繪（頭到胸口半身像）
+
+```
+semi-realistic 2.5D Korean game character illustration, head-and-chest bust portrait, close-up framing cropped at the chest, western fantasy detective world, mature visual novel character, white or transparent background, same outfit and design as the character reference sheet, a 62-year-old male senior merchant guild office director, deeply lined weathered face, heavy-lidded watchful eyes, neatly combed thinning grey hair, conservative dark formal long coat with subtle silver trim, one hand raised mid-gesture as if tapping a table, a fine silver pocket watch chain visible at his chest, calm deliberate cautious expression, detailed fabric texture, clean lines, soft cinematic lighting, professional concept art quality, no text, no watermark, not anime, not chibi, not photorealistic photography, not a 3D render
+```
+
+**立繪規格建議**：1張（沉穩、思考中的表情）即可，他在劇本裡情緒起伏不大，
+暫不需要表情差分。
+
+---
+
+## 瑞娜（Rina）— 獨立工匠、設計圖持有人
+
+人物卡依據：26歲，獨立工匠，身材纖細、雙手交握在身前，指節邊緣有一層磨得發亮的
+厚繭（長年握同一種工具留下的痕跡），眼神銳利、直視不躲。出現於D2附近（場景⑤）
+跟⑩收尾，花了三年畫設計圖、對作品有強烈的擁有感。
+
+**階級視覺定位**：依角色風格指南第5節「大學/學者/魔法技術者」——長外套、工具袋、
+手套，顏色冷靜克制，可有少量魔法晶石/量測工具，但比席默更獨立自尊：站姿更直、
+眼神更穩定，不是緊張型角色。
+
+### 1. 角色設定圖（3視圖）
+
+```
+character design reference sheet, semi-realistic 2.5D Korean game character illustration, western fantasy detective world, mature visual novel character, grounded magic setting, white background, one close-up face portrait on the left side plus three full-body views on the right side (front view, 3/4 side view, back view), identical outfit and proportions across all views, detailed fabric texture, clean lines, soft studio lighting, professional concept art quality, no text, no watermark, not anime, not chibi, a 26-year-old female independent magical-device craftswoman and inventor, slender but upright confident posture, sharp direct unwavering eyes, practical fitted long craftswoman's coat in muted cool tones, sleeves rolled or cuffed to reveal hands with visible calluses along the knuckles and fingertips from years of gripping drafting tools, a leather tool satchel or rolled blueprint case slung across the body as her signature prop, a small precision measuring instrument with a faint restrained pale blue-white glow clipped to her coat (NOT green — green is reserved for the protagonist's data-calculator device), proud self-reliant bearing, restrained magic aesthetic, not gothic horror, not photorealistic photography, not a 3D render
+```
+
+### 2. 立繪（頭到胸口半身像）
+
+```
+semi-realistic 2.5D Korean game character illustration, head-and-chest bust portrait, close-up framing cropped at the chest, western fantasy detective world, mature visual novel character, white or transparent background, same outfit and design as the character reference sheet, a 26-year-old female independent magical-device craftswoman and inventor, sharp direct unwavering eyes, practical fitted long craftswoman's coat in muted cool tones, one hand visible with calluses along the knuckles holding a rolled blueprint case close to her chest as her signature prop, proud composed expression with a faint undertone of protectiveness, detailed fabric texture, clean lines, soft cinematic lighting, professional concept art quality, no text, no watermark, not anime, not chibi, not photorealistic photography, not a 3D render
+```
+
+**立繪規格建議**：1張（站姿、抱著設計圖的保護性姿態）即可，她在劇本裡情緒線
+單一（擔憂→失而復得），暫不需要表情差分。

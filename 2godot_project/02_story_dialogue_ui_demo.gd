@@ -38,6 +38,13 @@ const UI_SKIN_SAVE_LOAD_DIR := "res://assets/ui/save_load/"
 const BG_SAVE_LOAD_OFFICE := UI_SKIN_SAVE_LOAD_DIR + "bg_save_load_office.png"
 const PANEL_SAVE_LOAD_MAIN := UI_SKIN_SAVE_LOAD_DIR + "panel_main_save_load.png"
 const SAVE_LOAD_SLOT_EMPTY := UI_SKIN_SAVE_LOAD_DIR + "slot_empty_normal.png"
+
+# 設定彈窗素材（使用生圖配合複製來的 main panel 與程式碼自繪 CheckBox 勾選樣式）。
+const UI_SKIN_SETTINGS_DIR := "res://assets/ui/settings/"
+const PANEL_SETTINGS_MAIN := UI_SKIN_SETTINGS_DIR + "panel_settings_main.png"
+const BUTTON_TAB_BG := UI_SKIN_SETTINGS_DIR + "button_tab_bg.png"
+const CHECKBOX_UNCHECKED := UI_SKIN_SETTINGS_DIR + "checkbox_unchecked.png"
+const SLIDER_GRABBER := UI_SKIN_SETTINGS_DIR + "slider_grabber.png"
 const SAVE_LOAD_SLOT_SAVED := UI_SKIN_SAVE_LOAD_DIR + "slot_saved_normal.png"
 const SAVE_LOAD_SLOT_SELECTED_FRAME := UI_SKIN_SAVE_LOAD_DIR + "frame_slot_selected.png"
 
@@ -251,7 +258,13 @@ var objective_header_button: TextureButton
 var objective_panel: PanelContainer
 var objective_list: VBoxContainer
 var objective_panel_collapsed := false
-var settings_panel: PanelContainer
+var settings_panel: Control
+var settings_tab_audio: VBoxContainer
+var settings_tab_display: VBoxContainer
+var settings_tab_buttons: Array[Button] = []
+var tex_tab_bg: Texture2D
+var tex_checkbox_unchecked: Texture2D
+var tex_slider_grabber: Texture2D
 var save_load_panel: Control
 var save_load_mode := SAVE_LOAD_MODE_SAVE
 var save_load_selected_index := 0
@@ -487,18 +500,221 @@ func _make_objective_item_row(objective_text: String) -> HBoxContainer:
 # 建構區：設定、存讀檔、紀錄彈窗
 # ------------------------------
 func _build_settings_popup() -> void:
-	settings_panel = PanelContainer.new()
-	settings_panel.name = "SettingsPopup_BgmSfx"
+	settings_panel = Control.new()
+	settings_panel.name = "SettingsPopup"
 	settings_panel.visible = false
-	_apply_anchors(settings_panel, ANCHOR_SETTINGS_POPUP)
-	settings_panel.add_theme_stylebox_override("panel", _make_texture_style(PANEL_DIALOGUE_BOX, STYLE_POPUP_TEXTURE_MARGIN, STYLE_POPUP_CONTENT_MARGIN))
+	_apply_anchors(settings_panel, ANCHOR_SAVE_LOAD_POPUP)
 	add_child(settings_panel)
 
-	var layout := _make_popup_layout(settings_panel, MARGIN_SETTINGS_POPUP, GAP_SETTINGS_LAYOUT)
-	var title_row := _make_popup_title_row(layout, "設定", _close_settings_popup, "Button_CloseSettings")
-	layout.add_child(_make_volume_row("BGM", bgm_volume, _set_bgm_volume))
-	layout.add_child(_make_volume_row("SFX", sfx_volume, _set_sfx_volume))
-	title_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# 使用 Image.load_from_file 繞過 Godot 的 .import 導入限制，並在載入時執行柔和羽化去黑底
+	tex_tab_bg = _load_texture_without_import(BUTTON_TAB_BG, 0.08)
+	tex_checkbox_unchecked = _load_texture_without_import(CHECKBOX_UNCHECKED, 0.15)
+	tex_slider_grabber = _load_texture_without_import(SLIDER_GRABBER, 0.15)
+
+	# 全螢幕背景，與存讀檔彈窗共用書房背景
+	var background := TextureRect.new()
+	background.name = "Background_SettingsOffice"
+	background.texture = load(BG_SAVE_LOAD_OFFICE)
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	settings_panel.add_child(background)
+
+	# 主金屬卡片面板（採用複製自存讀檔的 panel_settings_main.png 貼圖）
+	var card := PanelContainer.new()
+	card.name = "CardPanel_SettingsMain"
+	_apply_anchors(card, ANCHOR_SAVE_LOAD_CARD)
+	card.add_theme_stylebox_override("panel", _make_texture_style(PANEL_SETTINGS_MAIN, STYLE_SAVE_LOAD_TEXTURE_MARGIN, STYLE_SAVE_LOAD_CONTENT_MARGIN))
+	settings_panel.add_child(card)
+
+	# 主邊距容器（頂部 Margin 設為 96 以避開邊框正上方的綠色寶石金屬裝飾花紋）
+	var main_margin := MarginContainer.new()
+	main_margin.name = "SettingsMainMargin"
+	main_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_apply_margins(main_margin, Vector4(156, 96, 156, MARGIN_LOG_POPUP.w))
+	card.add_child(main_margin)
+
+	var main_layout := VBoxContainer.new()
+	main_layout.name = "SettingsMainLayout"
+	main_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_layout.add_theme_constant_override("separation", 24)
+	main_margin.add_child(main_layout)
+
+	# 獨立關閉按鈕，絕對定位於卡片右上角
+	var close_button := _make_small_popup_button("×")
+	close_button.name = "Button_CloseSettings"
+	close_button.add_theme_font_size_override("font_size", FONT_POPUP_CLOSE)
+	close_button.pressed.connect(_close_settings_popup)
+	close_button.anchor_left = ANCHOR_SAVE_LOAD_CARD.z
+	close_button.anchor_top = ANCHOR_SAVE_LOAD_CARD.y
+	close_button.anchor_right = ANCHOR_SAVE_LOAD_CARD.z
+	close_button.anchor_bottom = ANCHOR_SAVE_LOAD_CARD.y
+	close_button.custom_minimum_size = POPUP_CLOSE_BUTTON_SIZE
+	close_button.offset_left = -120
+	close_button.offset_top = 10
+	close_button.offset_right = -56
+	close_button.offset_bottom = 66
+	settings_panel.add_child(close_button)
+
+	# 頂部標題與分頁切換列
+	var header_row := HBoxContainer.new()
+	header_row.name = "HeaderRow"
+	header_row.add_theme_constant_override("separation", 32)
+	main_layout.add_child(header_row)
+
+	var title := Label.new()
+	title.text = "設定"
+	_apply_label_style(title, FONT_POPUP_TITLE, COLOR_TEXT_MAIN)
+	header_row.add_child(title)
+
+	# 分頁標籤容器
+	var tab_container := HBoxContainer.new()
+	tab_container.name = "TabContainer"
+	tab_container.add_theme_constant_override("separation", 12)
+	header_row.add_child(tab_container)
+
+	# 建立分頁按鈕（套用 AI 生成的分頁按鈕背景圖）
+	_build_settings_tabs(tab_container)
+
+	# 設定內容顯示區
+	var content_area := PanelContainer.new()
+	content_area.name = "SettingsContentArea"
+	content_area.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content_area.add_theme_stylebox_override("panel", _make_flat_panel_style("#141816a0", "#c9d3c622", 1, 4))
+	main_layout.add_child(content_area)
+
+	var content_margin := MarginContainer.new()
+	content_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_apply_margins(content_margin, Vector4(40, 30, 40, 30))
+	content_area.add_child(content_margin)
+
+	# 音訊分頁內容
+	settings_tab_audio = VBoxContainer.new()
+	settings_tab_audio.name = "TabContent_Audio"
+	settings_tab_audio.add_theme_constant_override("separation", 28)
+	content_margin.add_child(settings_tab_audio)
+
+	# 顯示與輔助分頁內容
+	settings_tab_display = VBoxContainer.new()
+	settings_tab_display.name = "TabContent_Display"
+	settings_tab_display.add_theme_constant_override("separation", 28)
+	settings_tab_display.visible = false
+	content_margin.add_child(settings_tab_display)
+
+	_fill_audio_tab()
+	_fill_display_tab()
+
+	# 預設選中第一個分頁
+	_select_settings_tab(0)
+
+
+func _build_settings_tabs(container: HBoxContainer) -> void:
+	settings_tab_buttons.clear()
+	var tabs = ["音訊設定", "顯示與輔助"]
+	for i in range(tabs.size()):
+		var tab_btn := Button.new()
+		tab_btn.name = "Button_Tab_%d" % i
+		tab_btn.text = tabs[i]
+		tab_btn.focus_mode = Control.FOCUS_NONE
+		tab_btn.custom_minimum_size = Vector2(140, 44)
+		
+		var custom_font = load("res://assets/fonts/NotoSerifTC[wght].ttf")
+		if custom_font:
+			tab_btn.add_theme_font_override("font", custom_font)
+		
+		# 套用分頁按鈕背景圖
+		tab_btn.add_theme_stylebox_override("normal", _make_texture_style(tex_tab_bg, 14, 6))
+		tab_btn.add_theme_stylebox_override("hover", _make_texture_style(tex_tab_bg, 14, 6))
+		tab_btn.add_theme_stylebox_override("pressed", _make_texture_style(tex_tab_bg, 14, 6))
+		tab_btn.add_theme_color_override("font_color", Color(COLOR_TEXT_MUTED))
+		
+		tab_btn.pressed.connect(_select_settings_tab.bind(i))
+		container.add_child(tab_btn)
+		settings_tab_buttons.append(tab_btn)
+
+
+func _select_settings_tab(tab_index: int) -> void:
+	for i in range(settings_tab_buttons.size()):
+		var btn := settings_tab_buttons[i]
+		if i == tab_index:
+			btn.modulate = Color(COLOR_ACCENT_GREEN)
+			btn.add_theme_color_override("font_color", Color(COLOR_TEXT_BRIGHT))
+		else:
+			btn.modulate = Color.WHITE
+			btn.add_theme_color_override("font_color", Color(COLOR_TEXT_MUTED))
+	
+	settings_tab_audio.visible = tab_index == 0
+	settings_tab_display.visible = tab_index == 1
+
+
+func _fill_audio_tab() -> void:
+	settings_tab_audio.add_child(_make_volume_row("BGM 音量", bgm_volume, _set_bgm_volume))
+	settings_tab_audio.add_child(_make_volume_row("音效音量", sfx_volume, _set_sfx_volume))
+
+
+func _fill_display_tab() -> void:
+	settings_tab_display.add_child(_make_checkbox_row("全螢幕模式", DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN, _toggle_fullscreen))
+	settings_tab_display.add_child(_make_checkbox_row("高亮可互動格子", true, _toggle_highlight_grid))
+
+
+func _make_checkbox_row(label_text: String, is_checked: bool, changed_callback: Callable) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 24)
+
+	var label := Label.new()
+	label.text = label_text
+	label.custom_minimum_size = Vector2(200, 0)
+	_apply_label_style(label, FONT_VOLUME_LABEL, COLOR_TEXT_MAIN)
+	row.add_child(label)
+
+	var cb := CheckBox.new()
+	cb.name = "CheckBox_%s" % label_text
+	cb.button_pressed = is_checked
+	cb.focus_mode = Control.FOCUS_NONE
+	
+	# 設定 checkbox 未選取狀態為生成的銀色空框圖案
+	cb.add_theme_icon_override("unchecked", tex_checkbox_unchecked)
+	# 勾選選取狀態使用 Godot 代碼動態繪製的綠色晶石發光貼圖
+	cb.add_theme_icon_override("checked", _create_checked_texture())
+	
+	cb.toggled.connect(changed_callback)
+	row.add_child(cb)
+	return row
+
+
+func _create_checked_texture() -> ImageTexture:
+	var img := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0)) # 透明底
+	
+	# 用程式碼繪製一個精緻的魔法綠色晶石：中間實心、外部發光
+	for y in range(32):
+		for x in range(32):
+			var dist := Vector2(x - 16, y - 16).length()
+			if dist < 6:
+				# 晶石核心：明亮的淡綠色
+				img.set_pixel(x, y, Color("#bde8cc"))
+			elif dist < 12:
+				# 外部發光漸變
+				var alpha := (12.0 - dist) / 6.0 * 0.7
+				img.set_pixel(x, y, Color(0.74, 0.91, 0.8, alpha))
+	return ImageTexture.create_from_image(img)
+
+
+func _toggle_fullscreen(checked: bool) -> void:
+	if checked:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	else:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+
+
+func _toggle_highlight_grid(_checked: bool) -> void:
+	# 僅做UI回呼原型展示
+	pass
 
 
 func _build_save_load_popup() -> void:
@@ -1094,6 +1310,11 @@ func _make_volume_row(label_text: String, value: float, changed_callback: Callab
 	slider.value = value
 	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slider.value_changed.connect(changed_callback)
+	
+	# 套用 AI 生成並經過動態去黑底與羽化處理的發光晶石 Grabber 貼圖
+	slider.add_theme_icon_override("grabber", tex_slider_grabber)
+	slider.add_theme_icon_override("grabber_highlight", tex_slider_grabber)
+	
 	row.add_child(slider)
 	return row
 
@@ -1181,16 +1402,19 @@ func _make_flat_panel_style(bg_color: String, border_color: String, border_width
 	return style
 
 
-func _make_texture_style(path: String, texture_margin: int, content_margin: int) -> StyleBoxTexture:
+func _make_texture_style(path: Variant, texture_margin: int, content_margin: int) -> StyleBoxTexture:
 	return _make_texture_style_hv(path, texture_margin, texture_margin, content_margin)
 
 
 # 左右、上下邊距分開設定：像姓名牌這種「兩側尖角+寶石、上下只是薄邊框」
 # 的造型，左右需要很大的邊距才能完整保住尖角不被拉伸，但上下邊距太大
 # 反而會超過框高、互相擠壞，所以不能用同一個數字套四邊。
-func _make_texture_style_hv(path: String, margin_h: int, margin_v: int, content_margin: int) -> StyleBoxTexture:
+func _make_texture_style_hv(path_or_tex: Variant, margin_h: int, margin_v: int, content_margin: int) -> StyleBoxTexture:
 	var style := StyleBoxTexture.new()
-	style.texture = load(path)
+	if path_or_tex is String:
+		style.texture = load(path_or_tex)
+	else:
+		style.texture = path_or_tex
 	style.set_texture_margin(SIDE_LEFT, margin_h)
 	style.set_texture_margin(SIDE_RIGHT, margin_h)
 	style.set_texture_margin(SIDE_TOP, margin_v)
@@ -1201,3 +1425,21 @@ func _make_texture_style_hv(path: String, margin_h: int, margin_v: int, content_
 	style.set_content_margin(SIDE_BOTTOM, content_margin)
 	style.draw_center = true
 	return style
+
+
+func _load_texture_without_import(path: String, remove_black_threshold: float = 0.0) -> ImageTexture:
+	var img := Image.load_from_file(path)
+	if img == null or img.is_empty():
+		push_error("Failed to load image from file: " + path)
+		return null
+
+	if remove_black_threshold > 0.0:
+		for y in range(img.get_height()):
+			for x in range(img.get_width()):
+				var color := img.get_pixel(x, y)
+				var max_val: float = maxf(color.r, maxf(color.g, color.b))
+				if max_val < remove_black_threshold:
+					# 越接近黑色越透明，實現柔和羽化
+					var alpha: float = max_val / remove_black_threshold
+					img.set_pixel(x, y, Color(color.r, color.g, color.b, alpha * color.a))
+	return ImageTexture.create_from_image(img)
