@@ -2,6 +2,67 @@ extends Control
 
 # ------------------------------
 # 異動紀錄 (Change Log):
+# 2026-06-29（第六輪，CG文字整句直接顯示）：
+#   CG場景的文字改成整句直接出現，不要逐字打字機效果——CG本身是一次性
+#   呈現的畫面，逐字慢慢跳字反而拖慢節奏。_show_line()在判斷完
+#   is_cg_scene之後，CG分支直接把active_dialogue_label.visible_ratio
+#   設成1.0、is_typing設false、不建立Tween就return；非CG場景的打字機
+#   邏輯完全不變。連帶_next_line()的「點擊跳過動畫」邏輯不用特別處理
+#   ——CG那句因為is_typing一開始就是false，點擊會直接走「前進下一句」
+#   那條路徑，行為本來就正確。
+# 2026-06-29（第五輪，CG文字條移除外框/細節線）：
+#   玩家確認後不需要銀色外框跟淡綠細節線，CG畫面要越單純越好，跟平常
+#   雕花對話框刻意做出區別。_make_flat_panel_style()的border_width改傳
+#   0（不畫框），移除_make_detail_line(COLOR_ACCENT_GREEN)那一行，連帶
+#   拿掉只為了放這條線而加的VBoxContainer跟GAP_CG_TEXT_BAR_LAYOUT常數
+#   （沒有其他地方用到，直接刪除，不留沒人用的常數）。背景半透明深炭黑
+#   (COLOR_CG_TEXT_BAR_BG) 跟文字象牙白維持不變。
+# 2026-06-29（第四輪，CG文字條位置/配色調整）：
+#   玩家提供參考圖修正CG文字條的版面：①位置從貼著螢幕最底部
+#   (0.840~0.970) 改成畫面中下段、矮一點的比例(0.575~0.620)，對齊參考
+#   圖呈現的位置/高度；②配色不再暫時沿用COLOR_PANEL_HEADER（偏深綠，
+#   是給其他面板用的），改成直接對齊ui_style_guide_v0.1.md第6節「對白
+#   框風格」四要素：深炭黑半透明（新增COLOR_CG_TEXT_BAR_BG，alpha約
+#   0.55達成「transparent frame」的要求，能透出CG插畫）、銀色細框
+#   （沿用COLOR_LINE_SILVER）、淡綠細節線（新增_make_detail_line()疊圖
+#   ，沿用COLOR_ACCENT_GREEN）、文字象牙白（沿用COLOR_TEXT_BRIGHT，
+#   本來就符合）。MARGIN_CG_TEXT_BAR內距跟著比例縮小變矮的文字條一起
+#   調小，新增GAP_CG_TEXT_BAR_LAYOUT控制細節線跟文字的間距。
+# 2026-06-29（第三輪，CG場景專用版面）：
+#   新增CG（全螢幕過場插畫）場景的顯示模式：CG出現時不用平常那個有雕花
+#   外框、姓名牌、會被host立繪蓋住一角的對話框，改成蓋滿全螢幕的插畫
+#   （目前還沒有正式CG素材，先用COLOR_CG_PLACEHOLDER_BG佔位色平面+
+#   提示文字）疊一條矮、寬度貼齊螢幕左右邊緣的簡單矩形文字條
+#   （ANCHOR_CG_TEXT_BAR），不顯示姓名、所有角色立繪全部隱藏（依使用者
+#   決定）。DIALOGUE_LINES新增"scene":"cg"標記區分一句話是不是CG場景，
+#   跟"type"（dialogue/system/narration）是兩個獨立維度。新增
+#   _build_cg_layer()/_build_cg_text_bar()建構CG層跟文字條，
+#   _set_cg_mode()統一處理切換時兩套版面的顯示/隱藏。_show_line()/
+#   _next_line()改用新增的active_dialogue_label成員變數追蹤「目前真正
+#   在打字機播放中的是哪個Label」，不再寫死成dialogue_label，CG場景下
+#   點擊跳過動畫才能正確補滿cg_text_label而不是補錯對話框文字。
+#   0mockup目前沒有定義CG模式的美術規格，文字條暫時沿用既有色票
+#   （COLOR_PANEL_HEADER/COLOR_LINE_SILVER）跟_make_flat_panel_style()，
+#   等之後有正式CG美術規格再對齊調整。
+# 2026-06-29（第二輪）：
+#   新增host(莉希雅)立繪的人形輪廓陰影：立繪是去背PNG、邊緣是人形不是
+#   方形，一般文字陰影/方形ColorRect陰影套上去會露出矩形邊界，跟立繪
+#   邊緣對不上。改成複製同一張貼圖、modulate染黑調低透明度、整體往右下
+#   偏移(SHADOW_OFFSET_HOST_SPRITE)疊在host_sprite底下——modulate只改
+#   顏色不影響alpha透空範圍，陰影輪廓自然跟立繪本身完全一致。新增
+#   host_sprite_shadow變數，跟著host_sprite一起顯示/隱藏。
+# 2026-06-29:
+#   立繪顯示改成「依說話者切換、同一時間只顯示一位」：原本host(莉希雅)
+#   跟其他角色(Sophia)兩個立繪節點永遠同時顯示、跟對白內容無關，現在
+#   每句DIALOGUE_LINES新增speaker_id欄位，_show_line()呼叫新增的
+#   _update_speaker_sprite()依speaker_id決定畫面只顯示其中一個：host
+#   固定顯示在左下角、蓋在對話框上面(ANCHOR_HOST不變)，其他角色固定
+#   顯示在置中欄位(ANCHOR_CHAR不變)，沒有speaker_id（例如系統訊息）則
+#   兩者都隱藏。host_sprite/character_sprite改存成class member變數，
+#   不再是build函式內的local變數，才能在_show_line()裡控制顯示/隱藏。
+#   SOPHIA_TEMP原本誤指向host的圖檔(借位)，已修正指向真正的
+#   sophia_story_transparent_v0_1.png。新增CHARACTER_SPRITE_TEXTURES
+#   對照表，之後其餘角色加入只要新增對照、不用再加新的立繪欄位。
 # 2026-06-26:
 #   1. 案件目標 UI 微調與重構：合併 builder 函數至單一 VBoxContainer (CaseObjectiveWidget) 管理，設定 separation=-6 消除垂直間隙，並配合外層 MarginContainer (CaseObjectiveContentMargin) 設定 margin_left=10, margin_right=5 來對齊金屬邊框實體邊緣。
 #   2. 字體視覺提升：下載開源思源宋體 (Noto Serif TC Variable Font) 置於 assets/fonts/，並動態套用到所有 Label 與 Button 控制項，對齊 Mockup 中的雅緻明體/宋體古典風格。
@@ -17,7 +78,21 @@ const UI_SKIN_DIR := "res://assets/ui/story_dialogue/"
 const CHARACTER_DIR := "res://assets/characters/"
 const BG_STORY_OFFICE := UI_SKIN_DIR + "bg_detective_office_rainy_night.png"
 const HOST_TEMP := CHARACTER_DIR + "host_lisia_story_transparent_v0_1.png"
-const SOPHIA_TEMP := CHARACTER_DIR + "host_lisia_story_transparent_v0_1.png"
+# 原本SOPHIA_TEMP借用host的圖當佔位，現在assets/characters/已經有蘇菲亞
+# 自己的透明立繪素材，改指向正確檔案。
+const SOPHIA_TEMP := CHARACTER_DIR + "sophia_story_transparent_v0_1.png"
+
+# 角色id：每一句對白用這個id（不是speaker_name顯示字串）決定要顯示
+# 哪一張立繪、顯示在哪個位置——speaker_name只是姓名牌上的文字，兩者
+# 故意分開，姓名牌文字可以跟立繪id無關（例如同一個角色不同稱號）。
+const SPEAKER_ID_HOST := "host"
+const SPEAKER_ID_SOPHIA := "sophia"
+# 「host以外的其他角色」共用同一個置中立繪欄位(ANCHOR_CHAR)，這裡只要
+# 換貼圖就能換角色顯示，之後其餘2位主角加入只要在這裡新增對照即可，
+# 不用再加新的立繪欄位/錨點。
+const CHARACTER_SPRITE_TEXTURES := {
+	SPEAKER_ID_SOPHIA: SOPHIA_TEMP,
+}
 const BUTTON_NORMAL := UI_SKIN_DIR + "button_icon_frame_normal.png"
 const BUTTON_HOVER := UI_SKIN_DIR + "button_icon_frame_hover.png"
 const BUTTON_PRESSED := UI_SKIN_DIR + "button_icon_frame_pressed.png"
@@ -62,6 +137,15 @@ const COLOR_SHADOW_SOFT := "#00000068"
 const COLOR_SHADOW_DIALOGUE := "#6666666d"
 const COLOR_SHADOW_NAME := "#6666666d"
 const COLOR_VIGNETTE := Color(0.0, 0.0, 0.0, 0.18)
+# CG佔位色平面的底色——目前還沒有正式CG插畫素材，先用一塊跟其他立繪/
+# 背景明顯不同的中性深色，避免被誤認成已經是正式美術。
+const COLOR_CG_PLACEHOLDER_BG := Color(0.10, 0.10, 0.13, 1.0)
+# CG文字條配色：對齊ui_style_guide_v0.1.md第6節「對白框風格」——深炭黑
+# 半透明（不是COLOR_PANEL_HEADER那種偏深綠的色調，這裡用中性炭黑），
+# alpha調到約0.55，呼應「transparent frame」的要求，能透出後面的CG
+# 插畫；邊框沿用既有的COLOR_LINE_SILVER（銀色細框），細節線沿用既有的
+# COLOR_ACCENT_GREEN（淡綠細節線）。
+const COLOR_CG_TEXT_BAR_BG := "#1414148c"
 const COLOR_DIALOGUE_INNER_SHADOW := Color(0.0, 0.0, 0.0, 0.24)
 
 const FONT_MENU_LABEL := 20
@@ -112,6 +196,11 @@ const STYLE_SAVE_LOAD_CONTENT_MARGIN := 18
 
 const SHADOW_OFFSET_SMALL := Vector2(2, 2)
 const SHADOW_OFFSET_DIALOGUE := Vector2(2, 2)
+# host立繪的陰影不是文字陰影，是角色去背PNG的人形輪廓陰影——不能用
+# 一般文字陰影或方形ColorRect那套做法（會露出矩形邊界，看起來很假）。
+# 偏移量比文字陰影明顯大一些，因為這是角色立繪整體的投影，不是細字。
+const SHADOW_OFFSET_HOST_SPRITE := Vector2(10, 14)
+const COLOR_HOST_SPRITE_SHADOW := Color(0.0, 0.0, 0.0, 0.35)
 const AUTO_ADVANCE_SECONDS := 2.0
 const BGM_VOLUME_INITIAL := 0.75
 const SFX_VOLUME_INITIAL := 0.80
@@ -130,7 +219,7 @@ const SLIDER_STEP := 0.01
 # ------------------------------
 const ANCHOR_CHAR := Vector4(0.400, 0.000, 0.785, 1.000)
 # 莉希雅 (Host) 的專屬位置：左下角，與對話框高度切齊 (0.650 ~ 0.945)
-const ANCHOR_HOST := Vector4(0.000, 0.500, 0.180, 1.000)
+const ANCHOR_HOST := Vector4(0.000, 0.600, 0.180, 1.000)
 const ANCHOR_TOP_MENU := Vector4(0.665, 0.020, 0.972, 0.122)
 const ANCHOR_SETTINGS_POPUP := Vector4(0.36, 0.22, 0.68, 0.55)
 const ANCHOR_SAVE_LOAD_POPUP := Vector4(0.0, 0.0, 1.0, 1.0)
@@ -153,6 +242,18 @@ const ANCHOR_DIALOGUE_BOX := Vector4(0.035, 0.650, 0.985, 0.945)
 # 一樣寬——之前0.265右緣（寬422px）對短名字來說明顯過大，跟對話框內部
 # 的金色裝飾線視覺上連成一片，看起來像姓名牌「蓋住整個對話框」。
 const ANCHOR_NAME_PLATE := Vector4(0.090, 0.620, 0.285, 0.695)
+
+# CG（全螢幕過場插畫）出現時的版面：CG本身蓋滿全螢幕，文字條改成
+# 「矮、貼齊螢幕左右邊緣」的簡化矩形，不用平常那個有雕花外框/姓名牌、
+# 會被host立繪蓋住一角的對話框——CG畫面本身已經是視覺重點，厚重的
+# 裝飾外框反而搶戲。位置/高度比例依使用者提供的參考圖（文字條落在畫面
+# 中下段、不是貼著最底部），不是隨意猜的數字。0mockup目前沒有定義CG
+# 模式的專屬美術規格，配色改成直接對齊ui_style_guide_v0.1.md第6節
+# 「對白框風格」：深炭黑半透明、銀色細框、淡綠細節線、文字象牙白
+# （見COLOR_CG_TEXT_BAR_BG等色票），不是隨意挑色。
+const ANCHOR_CG_LAYER := Vector4(0.0, 0.0, 1.0, 1.0)
+const ANCHOR_CG_TEXT_BAR := Vector4(0.0, 0.575, 1.0, 0.620)
+const MARGIN_CG_TEXT_BAR := Vector4(80, 4, 80, 4)
 
 const MARGIN_POPUP := Vector4(42, 30, 38, 30)
 const MARGIN_SETTINGS_POPUP := Vector4(40, 28, 34, 28)
@@ -200,21 +301,40 @@ const TOP_MENU_ITEMS := [
 const DIALOGUE_LINES := [
 	{
 		"type": "dialogue",
+		"speaker_id": SPEAKER_ID_HOST,
 		"speaker_name": "莉希雅",
 		"text": "第一份委託，終於走到我的門前了。"
 	},
 	{
 		"type": "dialogue",
+		"speaker_id": SPEAKER_ID_HOST,
 		"speaker_name": "莉希雅",
 		"text": "先別急著相信任何證言。資料會比人誠實得多。"
+	},
+	# 以下這句是demo測試用的占位對白，純粹用來驗證「換到其他角色說話
+	# 時，立繪要切換成置中顯示」的機制，不是案件1正式劇本內容。
+	{
+		"type": "dialogue",
+		"speaker_id": SPEAKER_ID_SOPHIA,
+		"speaker_name": "蘇菲亞",
+		"text": "（佔位對白）莉莉，妳又把自己關在工作室裡敲敲打打了吧？"
 	},
 	{
 		"type": "system",
 		"speaker_name": "調查紀錄",
 		"text": "案件目標已更新。"
 	},
+	# 以下這句是demo測試用的占位對白，純粹用來驗證「CG場景切換成全螢幕
+	# 插畫+矮文字條、隱藏一般對話框/姓名牌/角色立繪」的機制，不是案件1
+	# 正式劇本內容，CG本身目前也只是佔位色平面，還沒有正式插畫素材。
 	{
 		"type": "dialogue",
+		"scene": "cg",
+		"text": "（佔位CG對白）窗外的雨還沒停，這份委託資料攤在桌上，比想像中更棘手。"
+	},
+	{
+		"type": "dialogue",
+		"speaker_id": SPEAKER_ID_HOST,
 		"speaker_name": "莉希雅",
 		"text": "把委託人的時間、地點和交易紀錄整理出來，我們再開始判斷。"
 	},
@@ -254,6 +374,11 @@ var typing_tween: Tween
 var name_plate: TextureRect
 var name_label: Label
 var dialogue_label: Label
+var dialogue_box_panel: PanelContainer  # 平常場景用的對話框面板，CG模式下要整個隱藏
+var cg_layer: ColorRect                 # CG（全螢幕過場插畫）佔位色平面，之後接正式CG素材時改成TextureRect或直接換貼圖
+var cg_text_bar: PanelContainer         # CG模式專用的矮+貼齊螢幕左右邊緣文字條，取代平常的雕花對話框
+var cg_text_label: Label
+var active_dialogue_label: Label        # 目前正在打字機播放中的文字Label，可能是dialogue_label或cg_text_label，_next_line()跳過動畫時要知道是哪一個
 var objective_header_button: TextureButton
 var objective_panel: PanelContainer
 var objective_list: VBoxContainer
@@ -269,6 +394,9 @@ var save_load_selected_index := 0
 var save_load_slot_buttons: Array[TextureButton] = []
 var save_load_selection_frames: Array[TextureRect] = []
 var dialogue_log_panel: Control
+var host_sprite: TextureRect       # 莉希雅(Host)立繪，固定左下角、蓋在對話框上
+var host_sprite_shadow: TextureRect # host立繪的人形輪廓陰影，跟host_sprite一起顯示/隱藏
+var character_sprite: TextureRect # host以外其他角色共用的置中立繪欄位，依speaker_id換貼圖
 var auto_button: BaseButton
 var auto_advance_timer: Timer
 var auto_advance_enabled := false
@@ -288,17 +416,45 @@ func _ready() -> void:
 
 func _build_ui() -> void:
 	_build_background()          # 1. 最底層：背景
-	_build_character_sprite()    # 2. 其他角色 (Sophia) 在對話框後面
+	_build_character_sprite()    # 2. host以外的其他角色，置中、在對話框後面
 	_build_objective_panel()
 	_build_top_right_menu()
 	_build_dialogue_box()        # 3. 中層：對話框
 	_build_host_sprite()         # 4. 最上層：莉希雅 (Host)，蓋在對話框上面
+	_build_cg_layer()            # 5. CG（全螢幕過場插畫）佔位層，平常隱藏
+	_build_cg_text_bar()         # 6. CG模式專用的矮+貼齊螢幕邊緣文字條，平常隱藏
 	_build_settings_popup()
 	_build_save_load_popup()
 	_build_dialogue_log_popup()
 	_build_auto_advance_timer()
 
 func _build_host_sprite() -> void:
+	# 立繪本身是去背PNG、輪廓是人形不是方形，一般文字陰影那套（純色
+	# ColorRect/StyleBox陰影）套在這上面只會露出一塊矩形的陰影邊界，
+	# 跟人形立繪的邊緣完全對不上，看起來很假。改成「複製同一張貼圖、
+	# 用modulate染黑＋調低透明度、整體往右下偏移」當陰影：modulate只
+	# 改變顏色不會動到alpha透空範圍，所以陰影的輪廓會跟立繪本身的人形
+	# 邊緣完全一致，偏移後自然形成貼地投影的效果。要先加進畫面（在
+	# 主體host之前），陰影才會被畫在host底下，不會蓋住本體。
+	var shadow := TextureRect.new()
+	shadow.name = "HostSpriteShadow_Lisia"
+	shadow.texture = load(HOST_TEMP)
+	_apply_anchors(shadow, ANCHOR_HOST)
+	# _apply_anchors()會把四邊offset都歸零，這裡刻意把四邊offset都加上
+	# 同一個位移量——左右offset一起平移、上下offset一起平移，矩形大小
+	# 不變，只是整個往右下移動，達到「陰影偏移」的效果。
+	shadow.offset_left += SHADOW_OFFSET_HOST_SPRITE.x
+	shadow.offset_right += SHADOW_OFFSET_HOST_SPRITE.x
+	shadow.offset_top += SHADOW_OFFSET_HOST_SPRITE.y
+	shadow.offset_bottom += SHADOW_OFFSET_HOST_SPRITE.y
+	shadow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shadow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shadow.modulate = COLOR_HOST_SPRITE_SHADOW
+	shadow.visible = false
+	add_child(shadow)
+	host_sprite_shadow = shadow
+
 	var host := TextureRect.new()
 	host.name = "HostSprite_Lisia_StoryTransparentV01"
 	host.texture = load(HOST_TEMP)
@@ -309,7 +465,65 @@ func _build_host_sprite() -> void:
 	# CENTERED在這個框內本身就幾乎貼滿上下緣，不會再留空隙。
 	host.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	host.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# 預設隱藏，實際顯示與否交給_show_line()依目前這句話的speaker_id
+	# 決定——同一時間最多只會有一個角色立繪顯示在畫面上。
+	host.visible = false
 	add_child(host)
+	host_sprite = host
+
+
+# CG（全螢幕過場插畫）佔位層：蓋滿全螢幕，平常隱藏，只有_set_cg_mode()
+# 切到CG場景時才顯示。目前還沒有正式CG美術素材，先用一塊純色平面+
+# 「CG（占位）」文字標示，之後接上正式插畫只要把這個ColorRect換成
+# TextureRect讀真實圖檔即可，不影響_show_line()/_set_cg_mode()的呼叫方式。
+func _build_cg_layer() -> void:
+	var layer := ColorRect.new()
+	layer.name = "CgLayer_Placeholder"
+	layer.color = COLOR_CG_PLACEHOLDER_BG
+	_apply_anchors(layer, ANCHOR_CG_LAYER)
+	layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.visible = false
+	add_child(layer)
+	cg_layer = layer
+
+	var placeholder_label := Label.new()
+	placeholder_label.name = "CgLayer_PlaceholderLabel"
+	placeholder_label.text = "CG（佔位，尚無正式插畫素材）"
+	placeholder_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	placeholder_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	placeholder_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_apply_label_style(placeholder_label, FONT_MENU_LABEL, COLOR_TEXT_MUTED, COLOR_SHADOW_SOFT, SHADOW_OFFSET_SMALL)
+	placeholder_label.set_anchors_preset(Control.PRESET_CENTER)
+	layer.add_child(placeholder_label)
+
+
+# CG模式專用的文字條：矮、寬度貼齊螢幕左右邊緣的簡單矩形，取代平常那個
+# 有雕花外框、姓名牌、會被host立繪蓋住一角的對話框——CG插畫本身才是
+# 畫面重點，不需要厚重裝飾外框搶戲。對齊使用者決定：CG模式下不顯示
+# 姓名（純文字），角色立繪全部隱藏，見_set_cg_mode()。
+func _build_cg_text_bar() -> void:
+	var bar := PanelContainer.new()
+	bar.name = "CgTextBar"
+	_apply_anchors(bar, ANCHOR_CG_TEXT_BAR)
+	# 深炭黑半透明、不要外框/細節線——玩家確認過比較喜歡乾淨的純色條，
+	# 不要太多裝飾線搶戲（跟平常的雕花對話框刻意做出區別，CG時版面要
+	# 越單純越好），所以border_width傳0，不再套用_make_detail_line()。
+	bar.add_theme_stylebox_override("panel", _make_flat_panel_style(COLOR_CG_TEXT_BAR_BG, COLOR_LINE_SILVER, 0, 0))
+	bar.mouse_filter = Control.MOUSE_FILTER_PASS
+	bar.visible = false
+	add_child(bar)
+	cg_text_bar = bar
+
+	var margin := MarginContainer.new()
+	_apply_margins(margin, MARGIN_CG_TEXT_BAR)
+	bar.add_child(margin)
+
+	cg_text_label = Label.new()
+	cg_text_label.name = "CgText"
+	cg_text_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cg_text_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_apply_label_style(cg_text_label, FONT_DIALOGUE_TEXT, COLOR_TEXT_BRIGHT, COLOR_SHADOW_DIALOGUE, SHADOW_OFFSET_DIALOGUE)
+	margin.add_child(cg_text_label)
 
 
 func _build_background() -> void:
@@ -339,15 +553,22 @@ func _build_background() -> void:
 	add_child(dialogue_shadow)
 
 
+# host以外其他角色共用的置中立繪欄位：哪個角色說話就把texture換成那個
+# 角色的圖（見CHARACTER_SPRITE_TEXTURES），不是Sophia的專屬節點——之前
+# 節點名稱/變數名稱寫死成Sophia，現在角色可以換，名稱跟著改成通用的
+# CharacterSprite，避免名稱跟實際顯示內容不一致。
 func _build_character_sprite() -> void:
-	var char := TextureRect.new()
-	char.name = "SophiaSprite_StoryTransparentV01"
-	char.texture = load(SOPHIA_TEMP)
-	_apply_anchors(char, ANCHOR_CHAR)
-	char.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	char.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	char.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(char)
+	var character := TextureRect.new()
+	character.name = "CharacterSprite_OtherSpeaker"
+	character.texture = load(SOPHIA_TEMP)
+	_apply_anchors(character, ANCHOR_CHAR)
+	character.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	character.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	character.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# 預設隱藏，跟host_sprite一樣交給_show_line()依speaker_id決定顯示。
+	character.visible = false
+	add_child(character)
+	character_sprite = character
 
 
 func _build_top_right_menu() -> void:
@@ -388,6 +609,7 @@ func _build_dialogue_box() -> void:
 	# 設為 PASS，確保點擊對白框面板時，點擊事件會氣泡傳遞到根控制節點的 _unhandled_input()
 	dialogue_box.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(dialogue_box)
+	dialogue_box_panel = dialogue_box
 
 	var margin := MarginContainer.new()
 	_apply_margins(margin, MARGIN_DIALOGUE)
@@ -1083,32 +1305,54 @@ func _on_auto_advance_timeout() -> void:
 # ------------------------------
 func _show_line(index: int) -> void:
 	var line: Dictionary = DIALOGUE_LINES[index]
-	
+
 	# 若先前有播放中的打字動畫，先將其強行終止
 	if typing_tween != null and typing_tween.is_valid():
 		typing_tween.kill()
 
-	dialogue_label.text = line["text"]
-	dialogue_label.visible_ratio = 0.0
+	# "scene": "cg" 是這句話專用的場景標記，跟"type"（dialogue/system/
+	# narration）無關——同一句話可以是「CG場景裡的對白」。CG場景要切換
+	# 成全螢幕插畫+矮文字條，平常場景才用一般的對話框+角色立繪，
+	# _set_cg_mode()統一處理這個切換（含隱藏姓名牌/角色立繪）。
+	var is_cg_scene: bool = line.get("scene", "") == "cg"
+	_set_cg_mode(is_cg_scene)
 
-	if line["type"] == "narration":
-		name_plate.visible = false
-		name_label.text = ""
-	else:
-		name_plate.visible = true
-		name_label.text = line["speaker_name"]
+	active_dialogue_label = cg_text_label if is_cg_scene else dialogue_label
+	active_dialogue_label.text = line["text"]
+	active_dialogue_label.visible_ratio = 0.0
+
+	if not is_cg_scene:
+		_update_speaker_sprite(line.get("speaker_id", ""))
+
+		if line["type"] == "narration":
+			name_plate.visible = false
+			name_label.text = ""
+		else:
+			name_plate.visible = true
+			name_label.text = line["speaker_name"]
 
 	if line["type"] == "system":
 		_mark_first_objective_done()
+
+	# CG場景的文字要整句直接出現，不要逐字打字機效果——CG本身已經是
+	# 一次性呈現的畫面，逐字慢慢跳字反而拖慢節奏，跟一般場景對白「想要
+	# 營造角色說話的節奏感」的需求不同。直接把visible_ratio設成1.0、
+	# 不建立Tween，立刻顯示完整文字。
+	if is_cg_scene:
+		is_typing = false
+		active_dialogue_label.visible_ratio = 1.0
+		if auto_advance_enabled:
+			auto_advance_timer.start()
+		return
 
 	# 開始打字機逐字播放動畫 (利用 Tween 漸變控制 visible_ratio)
 	is_typing = true
 	var text_length: int = (line["text"] as String).length()
 	# 計算打字動畫時間，並限制其最小時長以防文字過短時播放過快
 	var duration: float = max(TYPING_MIN_DURATION, text_length * TYPING_SPEED_CHAR)
-	
+
 	typing_tween = create_tween()
-	typing_tween.tween_property(dialogue_label, "visible_ratio", 1.0, duration).from(0.0)
+	typing_tween.tween_property(active_dialogue_label, "visible_ratio", 1.0, duration).from(0.0)
 	typing_tween.finished.connect(func() -> void:
 		is_typing = false
 		# 字元全部顯示完畢後，若有開啟自動播放，此時才啟動倒數計時器
@@ -1117,12 +1361,53 @@ func _show_line(index: int) -> void:
 	)
 
 
+# CG場景跟一般場景的切換：CG時顯示全螢幕佔位插畫+矮文字條，隱藏一般
+# 對話框/姓名牌/所有角色立繪；離開CG時隱藏CG層、把對話框收回顯示——
+# 姓名牌跟角色立繪的「顯示哪個」交還給_show_line()接下來的邏輯決定，
+# 這裡只負責「CG時兩者都先強制關閉」。
+func _set_cg_mode(is_cg: bool) -> void:
+	cg_layer.visible = is_cg
+	cg_text_bar.visible = is_cg
+	dialogue_box_panel.visible = not is_cg
+
+	if is_cg:
+		name_plate.visible = false
+		name_label.text = ""
+		host_sprite.visible = false
+		host_sprite_shadow.visible = false
+		character_sprite.visible = false
+
+
+# 依目前這句話的speaker_id決定畫面上顯示哪個角色的立繪，對齊真實視覺
+# 小說「同一時間只有一個角色在說話、立繪只顯示那一位」的習慣：
+#   - speaker_id是host(莉希雅)：顯示host_sprite（固定左下角、蓋在對話框
+#     上面），隱藏character_sprite。
+#   - speaker_id是CHARACTER_SPRITE_TEXTURES裡其他角色：character_sprite
+#     換成那個角色的貼圖、顯示在置中欄位，隱藏host_sprite。
+#   - 沒有speaker_id（例如系統訊息「調查紀錄」）：兩個都隱藏，沒有人
+#     在「說話」，沒有立繪可以顯示。
+# 同一時刻host_sprite跟character_sprite最多只會有一個是visible=true。
+func _update_speaker_sprite(speaker_id: String) -> void:
+	var is_host_speaking := speaker_id == SPEAKER_ID_HOST
+	host_sprite.visible = is_host_speaking
+	host_sprite_shadow.visible = is_host_speaking
+
+	if speaker_id != SPEAKER_ID_HOST and CHARACTER_SPRITE_TEXTURES.has(speaker_id):
+		character_sprite.texture = load(CHARACTER_SPRITE_TEXTURES[speaker_id])
+		character_sprite.visible = true
+	else:
+		character_sprite.visible = false
+
+
 func _next_line() -> void:
 	# 若打字動畫仍在播放，點擊立刻跳過動畫直接顯示完整文字
 	if is_typing:
 		if typing_tween != null and typing_tween.is_valid():
 			typing_tween.kill()
-		dialogue_label.visible_ratio = 1.0
+		# 跳過動畫時要補滿「目前真正在播放打字機效果的那個Label」，CG
+		# 場景下是cg_text_label、平常場景是dialogue_label，不能寫死成
+		# dialogue_label，否則CG場景點擊跳過動畫會補錯Label、畫面卡住。
+		active_dialogue_label.visible_ratio = 1.0
 		is_typing = false
 		return
 

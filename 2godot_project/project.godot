@@ -15,7 +15,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="excel_game_s2"
-run/main_scene="res://01_excel_simulator_step1_countif.tscn"
+run/main_scene="res://02_story_dialogue_ui_demo.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://app_icon.svg"
 
