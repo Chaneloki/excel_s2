@@ -147,11 +147,17 @@ const COLOR_CG_PLACEHOLDER_BG := Color(0.10, 0.10, 0.13, 1.0)
 # COLOR_ACCENT_GREEN（淡綠細節線）。
 const COLOR_CG_TEXT_BAR_BG := "#1414148c"
 const COLOR_DIALOGUE_INNER_SHADOW := Color(0.0, 0.0, 0.0, 0.24)
+# 設定彈窗分頁按鈕：低調矩形+銀框+淡綠光（對齊ui_style_guide_v0.1.md第5節
+# 按鈕風格規則），不選中時銀色細框、選中時邊框跟底色都換成淡綠強調。
+const COLOR_SETTINGS_TAB_BG_NORMAL := "#141816cc"
+const COLOR_SETTINGS_TAB_BG_SELECTED := "#1c2e24cc"
+const COLOR_SETTINGS_TAB_BORDER_SELECTED := "#bde8ccdd"
 
 const FONT_MENU_LABEL := 20
 const FONT_POPUP_CLOSE := 36
 const FONT_POPUP_BUTTON := 18
 const FONT_VOLUME_LABEL := 20
+const FONT_SETTINGS_TAB := 18
 const FONT_SAVE_LOAD_SLOT_TITLE := 25
 const FONT_SAVE_LOAD_SLOT_CHAPTER := 20
 const FONT_SAVE_LOAD_SLOT_LOCATION := 17
@@ -170,7 +176,18 @@ const MENU_STACK_SIZE := Vector2(96, 56)
 const MENU_BUTTON_SIZE := Vector2(96, 84)
 const POPUP_CLOSE_BUTTON_SIZE := Vector2(64, 56)
 const SAVE_LOAD_SLOT_SIZE := Vector2(480, 360)
-const VOLUME_LABEL_SIZE := Vector2(58, 0)
+# 寬度要容納最長的標籤文字「自動播放速度」（6個全形字），音訊分頁
+# 較短的標籤共用同一個寬度，滑桿起始位置兩個分頁才會對齊一致。
+const VOLUME_LABEL_SIZE := Vector2(120, 0)
+const SETTINGS_TAB_BUTTON_SIZE := Vector2(140, 44)
+const SETTINGS_TAB_BORDER_WIDTH := 1
+const SETTINGS_TAB_BORDER_WIDTH_SELECTED := 2
+const SETTINGS_TAB_CORNER_RADIUS := 6
+# 分頁列要比其他內容再往右縮一點，避開卡片左上角的銀色雕花轉角，不跟
+# 裝飾線條疊在一起。
+const SETTINGS_TAB_ROW_LEFT_INDENT := 64
+# 分頁列再往下移一點，跟卡片頂部裝飾線拉開距離。
+const SETTINGS_TAB_ROW_TOP_OFFSET := 20
 const DECORATIVE_LINE_HEIGHT := 2
 
 const STYLE_BUTTON_TEXTURE_MARGIN := 24
@@ -201,12 +218,20 @@ const SHADOW_OFFSET_DIALOGUE := Vector2(2, 2)
 # 偏移量比文字陰影明顯大一些，因為這是角色立繪整體的投影，不是細字。
 const SHADOW_OFFSET_HOST_SPRITE := Vector2(10, 14)
 const COLOR_HOST_SPRITE_SHADOW := Color(0.0, 0.0, 0.0, 0.35)
-const AUTO_ADVANCE_SECONDS := 2.0
 const BGM_VOLUME_INITIAL := 0.75
 const SFX_VOLUME_INITIAL := 0.80
 
-# 劇情對白打字速度（每個字元的顯示間隔秒數）
-const TYPING_SPEED_CHAR := 0.03
+# 文字速度／自動播放速度設定：滑桿沿用音量滑桿同一套0~1比例值元件
+# （0=最慢、1=最快），實際的「每字顯示秒數」/「自動播放等待秒數」用下面
+# 這組範圍常數內插得到，設定畫面只需要存比例值，不用直接存秒數。
+const TEXT_SPEED_INITIAL := 0.5
+const AUTO_ADVANCE_SPEED_INITIAL := 0.5
+# 劇情對白打字速度（每個字元的顯示間隔秒數）：最慢/最快兩端
+const TYPING_SPEED_CHAR_SLOWEST := 0.06
+const TYPING_SPEED_CHAR_FASTEST := 0.01
+# 自動播放時，顯示完一句話後等待幾秒才自動跳下一句：最慢/最快兩端
+const AUTO_ADVANCE_SECONDS_SLOWEST := 4.0
+const AUTO_ADVANCE_SECONDS_FASTEST := 1.0
 # 劇情對白打字機動畫的最短總播放時間（秒）
 const TYPING_MIN_DURATION := 0.2
 const SLIDER_MIN_VALUE := 0.0
@@ -271,6 +296,7 @@ const GAP_MENU := 14
 const GAP_MENU_LABEL := 0
 const GAP_POPUP_LAYOUT := 16
 const GAP_SETTINGS_LAYOUT := 18
+const GAP_SETTINGS_TAB_ROW := 12
 const GAP_TITLE_ROW := 12
 const GAP_VOLUME_ROW := 16
 const GAP_SAVE_LOAD_GRID_H := 16
@@ -289,6 +315,9 @@ const GAP_DIALOGUE_LAYOUT := 18
 const CASE_OBJECTIVES := [
 	"確認委託人的證言",
 ]
+
+const SETTINGS_TAB_LABEL_AUDIO := "音訊設定"
+const SETTINGS_TAB_LABEL_DISPLAY := "顯示與輔助"
 
 const TOP_MENU_ITEMS := [
 	{"label": "保存", "key": "save"},
@@ -344,27 +373,23 @@ const DIALOGUE_LINES := [
 const SAVE_LOAD_MODE_SAVE := "save"
 const SAVE_LOAD_MODE_LOAD := "load"
 
-const SAVE_LOAD_STATE_SAVED := "saved"
-const SAVE_LOAD_STATE_EMPTY := "empty"
-
 const SAVE_LOAD_GRID_COLUMNS := 3
 const SAVE_LOAD_LABEL_EMPTY := "空白檔案"
 
-# 6個案件檔案格的原型測試資料：照mockup排版，前2格已存檔、其餘4格空白
-# （見0mockup/save_load_ui_mockup.png）。
-const SAVE_LOAD_SLOT_DATA := [
-	{"state": SAVE_LOAD_STATE_SAVED, "chapter": "第1章", "location": "白塔街偵探所 / 調查中"},
-	{"state": SAVE_LOAD_STATE_SAVED, "chapter": "第1章", "location": "白塔街偵探所 / 調查中"},
-	{"state": SAVE_LOAD_STATE_EMPTY},
-	{"state": SAVE_LOAD_STATE_EMPTY},
-	{"state": SAVE_LOAD_STATE_EMPTY},
-	{"state": SAVE_LOAD_STATE_EMPTY},
-]
+# 存檔資料裡的章節/地點/狀態文字：案件資料結構零件完成前，整個demo只有
+# 一個章節、一個地點，先用結構性常數頂著，之後改成讀案件資料結構。
+const SAVE_DATA_CHAPTER := "第1章"
+const SAVE_DATA_LOCATION := "白塔街偵探所"
+const SAVE_DATA_STATUS := "調查中"
 
 # ------------------------------
 # 狀態區：畫面節點與互動狀態
 # ------------------------------
 var current_line_index := 0
+
+# 第一個案件目標是否已完成：存讀檔要保存/還原這個狀態，避免讀檔後目標
+# 顯示退回未完成。案件資料結構零件完成前，先用單一bool頂著一個目標。
+var objective_first_done := false
 
 # 劇情對白是否正在播放打字動畫中
 var is_typing := false
@@ -387,12 +412,15 @@ var settings_panel: Control
 var settings_tab_audio: VBoxContainer
 var settings_tab_display: VBoxContainer
 var settings_tab_buttons: Array[Button] = []
-var tex_tab_bg: Texture2D
 var save_load_panel: Control
 var save_load_mode := SAVE_LOAD_MODE_SAVE
 var save_load_selected_index := 0
 var save_load_slot_buttons: Array[TextureButton] = []
 var save_load_selection_frames: Array[TextureRect] = []
+var save_load_title_labels: Array[Label] = []
+var save_load_chapter_labels: Array[Label] = []
+var save_load_location_labels: Array[Label] = []
+var save_load_status_labels: Array[Label] = []
 var dialogue_log_panel: Control
 var host_sprite: TextureRect       # 莉希雅(Host)立繪，固定左下角、蓋在對話框上
 var host_sprite_shadow: TextureRect # host立繪的人形輪廓陰影，跟host_sprite一起顯示/隱藏
@@ -402,6 +430,10 @@ var auto_advance_timer: Timer
 var auto_advance_enabled := false
 var bgm_volume := BGM_VOLUME_INITIAL
 var sfx_volume := SFX_VOLUME_INITIAL
+# 文字速度/自動播放速度的0~1比例值，實際秒數透過_get_typing_speed_char()／
+# _get_auto_advance_seconds()內插計算，設定面板跟打字機/自動播放邏輯共用同一份狀態。
+var text_speed_ratio := TEXT_SPEED_INITIAL
+var auto_advance_speed_ratio := AUTO_ADVANCE_SPEED_INITIAL
 
 
 # ------------------------------
@@ -785,7 +817,18 @@ func _build_settings_popup() -> void:
 	close_button.offset_bottom = 66
 	settings_panel.add_child(close_button)
 
+	# 分頁切換列（音訊設定／顯示與輔助），外面包一層只加top margin的
+	# MarginContainer，跟卡片頂部裝飾線拉開距離。
+	var tab_row_margin := MarginContainer.new()
+	tab_row_margin.name = "SettingsTabRowMargin"
+	_apply_margins(tab_row_margin, Vector4(0, SETTINGS_TAB_ROW_TOP_OFFSET, 0, 0))
+	main_layout.add_child(tab_row_margin)
 
+	var tab_row := HBoxContainer.new()
+	tab_row.name = "SettingsTabRow"
+	tab_row.add_theme_constant_override("separation", GAP_SETTINGS_TAB_ROW)
+	tab_row_margin.add_child(tab_row)
+	_build_settings_tabs(tab_row)
 
 	# 設定內容顯示區
 	var content_area := PanelContainer.new()
@@ -815,46 +858,59 @@ func _build_settings_popup() -> void:
 	content_margin.add_child(settings_tab_display)
 
 	_fill_audio_tab()
+	_fill_display_tab()
 
 	# 預設選中第一個分頁
 	_select_settings_tab(0)
 
 
+# 分頁按鈕改用低調矩形+銀框+淡綠光（ui_style_guide_v0.1.md第5節），不
+# 借用button_icon_frame這種設計給「圖示」用的素材——那張圖拉伸成長條
+# 文字按鈕後邊框比例會跑掉，看起來像兩層疊框。容器前面先放一個固定寬度
+# 的空白Control，把整排按鈕往右推開，避開卡片左上角的銀色雕花轉角。
 func _build_settings_tabs(container: HBoxContainer) -> void:
+	var left_spacer := Control.new()
+	left_spacer.name = "TabRowLeftSpacer"
+	left_spacer.custom_minimum_size = Vector2(SETTINGS_TAB_ROW_LEFT_INDENT, 0)
+	container.add_child(left_spacer)
+
 	settings_tab_buttons.clear()
-	var tabs = ["音訊設定", "顯示與輔助"]
+	var tabs := [SETTINGS_TAB_LABEL_AUDIO, SETTINGS_TAB_LABEL_DISPLAY]
 	for i in range(tabs.size()):
-		var tab_btn := Button.new()
+		var tab_btn := _make_settings_tab_button(tabs[i])
 		tab_btn.name = "Button_Tab_%d" % i
-		tab_btn.text = tabs[i]
-		tab_btn.focus_mode = Control.FOCUS_NONE
-		tab_btn.custom_minimum_size = Vector2(140, 44)
-		
-		var custom_font = load("res://assets/fonts/NotoSerifTC[wght].ttf")
-		if custom_font:
-			tab_btn.add_theme_font_override("font", custom_font)
-		
-		# 套用分頁按鈕背景圖
-		tab_btn.add_theme_stylebox_override("normal", _make_texture_style(tex_tab_bg, 14, 6))
-		tab_btn.add_theme_stylebox_override("hover", _make_texture_style(tex_tab_bg, 14, 6))
-		tab_btn.add_theme_stylebox_override("pressed", _make_texture_style(tex_tab_bg, 14, 6))
-		tab_btn.add_theme_color_override("font_color", Color(COLOR_TEXT_MUTED))
-		
 		tab_btn.pressed.connect(_select_settings_tab.bind(i))
 		container.add_child(tab_btn)
 		settings_tab_buttons.append(tab_btn)
 
 
+func _make_settings_tab_button(label_text: String) -> Button:
+	var button := Button.new()
+	var custom_font = load("res://assets/fonts/NotoSerifTC[wght].ttf")
+	if custom_font:
+		button.add_theme_font_override("font", custom_font)
+	button.text = label_text
+	button.focus_mode = Control.FOCUS_NONE
+	button.custom_minimum_size = SETTINGS_TAB_BUTTON_SIZE
+	button.add_theme_font_size_override("font_size", FONT_SETTINGS_TAB)
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	return button
+
+
 func _select_settings_tab(tab_index: int) -> void:
 	for i in range(settings_tab_buttons.size()):
 		var btn := settings_tab_buttons[i]
-		if i == tab_index:
-			btn.modulate = Color(COLOR_ACCENT_GREEN)
-			btn.add_theme_color_override("font_color", Color(COLOR_TEXT_BRIGHT))
-		else:
-			btn.modulate = Color.WHITE
-			btn.add_theme_color_override("font_color", Color(COLOR_TEXT_MUTED))
-	
+		var is_selected := i == tab_index
+		var bg_color := COLOR_SETTINGS_TAB_BG_SELECTED if is_selected else COLOR_SETTINGS_TAB_BG_NORMAL
+		var border_color := COLOR_SETTINGS_TAB_BORDER_SELECTED if is_selected else COLOR_LINE_SILVER
+		var border_width := SETTINGS_TAB_BORDER_WIDTH_SELECTED if is_selected else SETTINGS_TAB_BORDER_WIDTH
+		var style := _make_flat_panel_style(bg_color, border_color, border_width, SETTINGS_TAB_CORNER_RADIUS)
+		btn.add_theme_stylebox_override("normal", style)
+		btn.add_theme_stylebox_override("hover", style)
+		btn.add_theme_stylebox_override("pressed", style)
+		btn.add_theme_color_override("font_color", Color(COLOR_TEXT_BRIGHT if is_selected else COLOR_TEXT_MUTED))
+		btn.add_theme_color_override("font_hover_color", Color(COLOR_TEXT_BRIGHT))
+
 	settings_tab_audio.visible = tab_index == 0
 	settings_tab_display.visible = tab_index == 1
 
@@ -862,6 +918,15 @@ func _select_settings_tab(tab_index: int) -> void:
 func _fill_audio_tab() -> void:
 	settings_tab_audio.add_child(_make_volume_row("BGM 音量", bgm_volume, _set_bgm_volume))
 	settings_tab_audio.add_child(_make_volume_row("音效音量", sfx_volume, _set_sfx_volume))
+
+
+# 顯示與輔助分頁v0.1範圍：文字速度、自動播放速度兩個會直接影響對白播放
+# 節奏的設定。ui_style_guide第10節列的對白框透明度/全螢幕/解析度/動畫
+# 特效是獨立的Settings UI零件範圍，留給那個零件，這裡先做Story Dialogue
+# UI demo本身就能立即驗證效果的兩項。
+func _fill_display_tab() -> void:
+	settings_tab_display.add_child(_make_volume_row("文字速度", text_speed_ratio, _set_text_speed))
+	settings_tab_display.add_child(_make_volume_row("自動播放速度", auto_advance_speed_ratio, _set_auto_advance_speed))
 
 
 func _create_checked_texture() -> ImageTexture:
@@ -935,25 +1000,28 @@ func _build_save_load_popup() -> void:
 
 	save_load_slot_buttons.clear()
 	save_load_selection_frames.clear()
-	var slot_index := 0
-	for slot_data in SAVE_LOAD_SLOT_DATA:
-		grid.add_child(_make_save_load_slot(slot_index, slot_data))
-		slot_index += 1
+	save_load_title_labels.clear()
+	save_load_chapter_labels.clear()
+	save_load_location_labels.clear()
+	save_load_status_labels.clear()
+	for slot_index in range(SaveSystem.SLOT_COUNT):
+		grid.add_child(_make_save_load_slot(slot_index))
 
 	_refresh_save_load_grid()
 
 
-func _make_save_load_slot(slot_index: int, slot_data: Dictionary) -> Control:
+# 建立單一存檔格的所有節點。是否「已存檔」現在改成讀磁碟上真的有沒有
+# 對應檔案決定，會隨玩家保存/讀取而變動，所以這裡只負責建node，所有
+# 跟「目前是否已存檔」相關的圖片/文字/anchor都交給_refresh_save_load_grid()
+# 統一更新，不在建構時就定案。
+func _make_save_load_slot(slot_index: int) -> Control:
 	var slot_root := Control.new()
 	slot_root.name = "SaveLoadSlot_%02d" % slot_index
 	slot_root.custom_minimum_size = SAVE_LOAD_SLOT_SIZE
 	slot_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slot_root.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
-	var is_saved: bool = slot_data["state"] == SAVE_LOAD_STATE_SAVED
-
-	# 選取高亮框：現在疊在格子底圖（檔案紙張）之下，好讓發光效果從紙張後面透出來。
-	# 同時為了對齊紙張實際大小（底圖左右有透明留白，而高亮框沒有），高亮框寬度要縮小、高度要拉高。
+	# 選取高亮框：疊在格子底圖（檔案紙張）之下，好讓發光效果從紙張後面透出來。
 	var selection_frame := TextureRect.new()
 	selection_frame.name = "SelectionFrame"
 	selection_frame.texture = load(SAVE_LOAD_SLOT_SELECTED_FRAME)
@@ -961,19 +1029,6 @@ func _make_save_load_slot(slot_index: int, slot_data: Dictionary) -> Control:
 	selection_frame.stretch_mode = TextureRect.STRETCH_SCALE
 	selection_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	selection_frame.visible = false
-	# 經過精確圖像分析與拉伸調整，使 833x771 選取框的發光邊緣能完美在外側包裹對齊 480x360 卡片中的紙張邊緣：
-	# - 已存檔格子：左 0.110, 右 0.930, 上 -0.060, 下 1.060
-	# - 空白格子：左 0.100, 右 0.920, 上 -0.030, 下 1.000
-	if is_saved:
-		selection_frame.anchor_left = 0.110
-		selection_frame.anchor_right = 0.930
-		selection_frame.anchor_top = -0.060
-		selection_frame.anchor_bottom = 1.060
-	else:
-		selection_frame.anchor_left = 0.100
-		selection_frame.anchor_right = 0.920
-		selection_frame.anchor_top = -0.030
-		selection_frame.anchor_bottom = 1.000
 	selection_frame.offset_left = 0
 	selection_frame.offset_top = 0
 	selection_frame.offset_right = 0
@@ -987,7 +1042,6 @@ func _make_save_load_slot(slot_index: int, slot_data: Dictionary) -> Control:
 	button.ignore_texture_size = true
 	button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_COVERED
 	button.focus_mode = Control.FOCUS_NONE
-	button.texture_normal = load(SAVE_LOAD_SLOT_SAVED if is_saved else SAVE_LOAD_SLOT_EMPTY)
 	button.pressed.connect(_on_save_load_slot_pressed.bind(slot_index))
 	slot_root.add_child(button)
 	save_load_slot_buttons.append(button)
@@ -995,69 +1049,54 @@ func _make_save_load_slot(slot_index: int, slot_data: Dictionary) -> Control:
 	# 建立頂部標題 Label
 	var title_label := Label.new()
 	title_label.name = "TitleLabel"
-	title_label.text = ("案件檔案 %02d" % (slot_index + 1)) if is_saved else SAVE_LOAD_LABEL_EMPTY
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_apply_label_style(title_label, FONT_SAVE_LOAD_SLOT_TITLE, COLOR_TEXT_MAIN, COLOR_SHADOW_SOFT, SHADOW_OFFSET_SMALL)
-	
-	if is_saved:
-		title_label.anchor_left = 0.11
-		title_label.anchor_right = 0.91
-	else:
-		title_label.anchor_left = 0.1
-		title_label.anchor_right = 0.9
-
-	# 稍微再下移一點（由原先的 0.12~0.22 改為 0.15~0.25），避開紙張頂端的迴紋針裝飾，使文字更加美觀
+	# 稍微再下移一點，避開紙張頂端的迴紋針裝飾，使文字更加美觀
 	title_label.anchor_top = 0.15
 	title_label.anchor_bottom = 0.25
 	slot_root.add_child(title_label)
+	save_load_title_labels.append(title_label)
 
-	if is_saved:
-		# 解析 location 欄位以拆分地點與狀態（例如將 "白塔街偵探所 / 調查中" 拆分）
-		var location_str: String = slot_data.get("location", "")
-		var loc_parts := location_str.split(" / ")
-		var loc_text := loc_parts[0] if loc_parts.size() > 0 else ""
-		var status_text := loc_parts[1] if loc_parts.size() > 1 else "調查中"
+	var chapter_label := Label.new()
+	chapter_label.name = "ChapterLabel"
+	chapter_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	chapter_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	chapter_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_apply_label_style(chapter_label, FONT_SAVE_LOAD_SLOT_CHAPTER, COLOR_TEXT_MAIN, COLOR_SHADOW_SOFT, SHADOW_OFFSET_SMALL)
+	chapter_label.anchor_left = 0.33
+	chapter_label.anchor_right = 0.9
+	chapter_label.anchor_top = 0.52
+	chapter_label.anchor_bottom = 0.61
+	slot_root.add_child(chapter_label)
+	save_load_chapter_labels.append(chapter_label)
 
-		var chapter_label := Label.new()
-		chapter_label.name = "ChapterLabel"
-		chapter_label.text = slot_data.get("chapter", "")
-		chapter_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		chapter_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-		chapter_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_apply_label_style(chapter_label, FONT_SAVE_LOAD_SLOT_CHAPTER, COLOR_TEXT_MAIN, COLOR_SHADOW_SOFT, SHADOW_OFFSET_SMALL)
-		chapter_label.anchor_left = 0.33
-		chapter_label.anchor_right = 0.9
-		chapter_label.anchor_top = 0.52
-		chapter_label.anchor_bottom = 0.61
-		slot_root.add_child(chapter_label)
+	var location_label := Label.new()
+	location_label.name = "LocationLabel"
+	location_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	location_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	location_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_apply_label_style(location_label, FONT_SAVE_LOAD_SLOT_LOCATION, COLOR_TEXT_MAIN, COLOR_SHADOW_SOFT, SHADOW_OFFSET_SMALL)
+	location_label.anchor_left = 0.33
+	location_label.anchor_right = 0.9
+	location_label.anchor_top = 0.61
+	location_label.anchor_bottom = 0.69
+	slot_root.add_child(location_label)
+	save_load_location_labels.append(location_label)
 
-		var location_label := Label.new()
-		location_label.name = "LocationLabel"
-		location_label.text = loc_text
-		location_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		location_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-		location_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_apply_label_style(location_label, FONT_SAVE_LOAD_SLOT_LOCATION, COLOR_TEXT_MAIN, COLOR_SHADOW_SOFT, SHADOW_OFFSET_SMALL)
-		location_label.anchor_left = 0.33
-		location_label.anchor_right = 0.9
-		location_label.anchor_top = 0.61
-		location_label.anchor_bottom = 0.69
-		slot_root.add_child(location_label)
-
-		var status_label := Label.new()
-		status_label.name = "StatusLabel"
-		status_label.text = status_text
-		status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		status_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-		status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_apply_label_style(status_label, FONT_SAVE_LOAD_SLOT_LOCATION, COLOR_ACCENT_GREEN, COLOR_SHADOW_SOFT, SHADOW_OFFSET_SMALL)
-		status_label.anchor_left = 0.33
-		status_label.anchor_right = 0.9
-		status_label.anchor_top = 0.69
-		status_label.anchor_bottom = 0.77
-		slot_root.add_child(status_label)
+	var status_label := Label.new()
+	status_label.name = "StatusLabel"
+	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	status_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_apply_label_style(status_label, FONT_SAVE_LOAD_SLOT_LOCATION, COLOR_ACCENT_GREEN, COLOR_SHADOW_SOFT, SHADOW_OFFSET_SMALL)
+	status_label.anchor_left = 0.33
+	status_label.anchor_right = 0.9
+	status_label.anchor_top = 0.69
+	status_label.anchor_bottom = 0.77
+	slot_root.add_child(status_label)
+	save_load_status_labels.append(status_label)
 
 	return slot_root
 
@@ -1226,14 +1265,43 @@ func _close_save_load_popup() -> void:
 
 
 # 讀取模式下空白格不可點擊（避免讀到空資料）；保存模式下所有格子都可點。
+# 「是否已存檔」每次重新整理都直接問SaveSystem，確保剛保存/剛讀取完
+# 重新打開彈窗時，畫面顯示的格子狀態跟磁碟上真正的存檔狀態一致。
 func _refresh_save_load_grid() -> void:
-	var slot_index := 0
-	for slot_data in SAVE_LOAD_SLOT_DATA:
-		var is_saved: bool = slot_data["state"] == SAVE_LOAD_STATE_SAVED
+	for slot_index in range(SaveSystem.SLOT_COUNT):
+		var is_saved: bool = SaveSystem.has_save(slot_index)
+		var save_data: Dictionary = SaveSystem.load_slot(slot_index) if is_saved else {}
+
 		var button := save_load_slot_buttons[slot_index]
 		button.disabled = save_load_mode == SAVE_LOAD_MODE_LOAD and not is_saved
+		button.texture_normal = load(SAVE_LOAD_SLOT_SAVED if is_saved else SAVE_LOAD_SLOT_EMPTY)
+
 		save_load_selection_frames[slot_index].visible = slot_index == save_load_selected_index
-		slot_index += 1
+		# 經過精確圖像分析與拉伸調整，使 833x771 選取框的發光邊緣能完美在外側包裹對齊 480x360 卡片中的紙張邊緣：
+		# - 已存檔格子：左 0.110, 右 0.930, 上 -0.060, 下 1.060
+		# - 空白格子：左 0.100, 右 0.920, 上 -0.030, 下 1.000
+		if is_saved:
+			save_load_selection_frames[slot_index].anchor_left = 0.110
+			save_load_selection_frames[slot_index].anchor_right = 0.930
+			save_load_selection_frames[slot_index].anchor_top = -0.060
+			save_load_selection_frames[slot_index].anchor_bottom = 1.060
+		else:
+			save_load_selection_frames[slot_index].anchor_left = 0.100
+			save_load_selection_frames[slot_index].anchor_right = 0.920
+			save_load_selection_frames[slot_index].anchor_top = -0.030
+			save_load_selection_frames[slot_index].anchor_bottom = 1.000
+
+		var title_label := save_load_title_labels[slot_index]
+		title_label.text = ("案件檔案 %02d" % (slot_index + 1)) if is_saved else SAVE_LOAD_LABEL_EMPTY
+		title_label.anchor_left = 0.11 if is_saved else 0.1
+		title_label.anchor_right = 0.91 if is_saved else 0.9
+
+		save_load_chapter_labels[slot_index].visible = is_saved
+		save_load_chapter_labels[slot_index].text = save_data.get("chapter", "")
+		save_load_location_labels[slot_index].visible = is_saved
+		save_load_location_labels[slot_index].text = save_data.get("location", "")
+		save_load_status_labels[slot_index].visible = is_saved
+		save_load_status_labels[slot_index].text = save_data.get("status", "")
 
 
 func _on_save_load_slot_pressed(slot_index: int) -> void:
@@ -1242,6 +1310,43 @@ func _on_save_load_slot_pressed(slot_index: int) -> void:
 	for frame in save_load_selection_frames:
 		frame.visible = i == slot_index
 		i += 1
+
+	if save_load_mode == SAVE_LOAD_MODE_SAVE:
+		SaveSystem.save_slot(slot_index, _gather_save_data())
+		_refresh_save_load_grid()
+		_close_save_load_popup()
+	else:
+		# 讀取模式下空白格的按鈕已被_refresh_save_load_grid()設成disabled，
+		# 點不到這裡，能執行到這步代表一定是已存檔的格子。
+		_apply_save_data(SaveSystem.load_slot(slot_index))
+		_close_save_load_popup()
+
+
+# 把目前遊戲進度整理成存檔用的Dictionary。章節/地點是結構性常數
+# （案件資料結構零件完成前，整個demo只有一個章節），目前對白index跟
+# 第一個案件目標完成狀態才是真正會隨玩家進度變動的資料。
+func _gather_save_data() -> Dictionary:
+	return {
+		"chapter": SAVE_DATA_CHAPTER,
+		"location": SAVE_DATA_LOCATION,
+		"status": SAVE_DATA_STATUS,
+		"current_line_index": current_line_index,
+		"objective_first_done": objective_first_done,
+	}
+
+
+# 把讀檔讀到的Dictionary還原回畫面狀態：跳到存檔時的那一句對白，並
+# 還原案件目標的完成標記，避免讀檔後目標顯示退回未完成。
+func _apply_save_data(save_data: Dictionary) -> void:
+	if save_data.is_empty():
+		return
+
+	current_line_index = clampi(save_data.get("current_line_index", 0), 0, DIALOGUE_LINES.size() - 1)
+	_show_line(current_line_index)
+
+	objective_first_done = save_data.get("objective_first_done", false)
+	if objective_first_done:
+		_mark_first_objective_done()
 
 
 func _open_dialogue_log_popup() -> void:
@@ -1268,7 +1373,7 @@ func _hide_all_popups() -> void:
 func _build_auto_advance_timer() -> void:
 	auto_advance_timer = Timer.new()
 	auto_advance_timer.name = "AutoAdvanceTimer"
-	auto_advance_timer.wait_time = AUTO_ADVANCE_SECONDS
+	auto_advance_timer.wait_time = _get_auto_advance_seconds()
 	# 修改為 one_shot 計時器，等到每次打字動畫顯示完畢後再重新計算倒數
 	auto_advance_timer.one_shot = true
 	auto_advance_timer.timeout.connect(_on_auto_advance_timeout)
@@ -1349,7 +1454,7 @@ func _show_line(index: int) -> void:
 	is_typing = true
 	var text_length: int = (line["text"] as String).length()
 	# 計算打字動畫時間，並限制其最小時長以防文字過短時播放過快
-	var duration: float = max(TYPING_MIN_DURATION, text_length * TYPING_SPEED_CHAR)
+	var duration: float = max(TYPING_MIN_DURATION, text_length * _get_typing_speed_char())
 
 	typing_tween = create_tween()
 	typing_tween.tween_property(active_dialogue_label, "visible_ratio", 1.0, duration).from(0.0)
@@ -1421,6 +1526,8 @@ func _next_line() -> void:
 
 
 func _mark_first_objective_done() -> void:
+	objective_first_done = true
+
 	if objective_list.get_child_count() < 1:
 		return
 
@@ -1440,6 +1547,28 @@ func _set_bgm_volume(value: float) -> void:
 
 func _set_sfx_volume(value: float) -> void:
 	sfx_volume = value
+
+
+func _set_text_speed(value: float) -> void:
+	text_speed_ratio = value
+
+
+func _set_auto_advance_speed(value: float) -> void:
+	auto_advance_speed_ratio = value
+	# 自動播放計時器已經在跑的話，下一次倒數才會用到新秒數即可，
+	# 不需要在這裡強制重啟計時器、打斷玩家目前正在看的這一句。
+	if auto_advance_timer != null:
+		auto_advance_timer.wait_time = _get_auto_advance_seconds()
+
+
+# 依text_speed_ratio（0~1，0最慢、1最快）內插出打字機「每字顯示秒數」。
+func _get_typing_speed_char() -> float:
+	return lerp(TYPING_SPEED_CHAR_SLOWEST, TYPING_SPEED_CHAR_FASTEST, text_speed_ratio)
+
+
+# 依auto_advance_speed_ratio（0~1，0最慢、1最快）內插出自動播放「等待秒數」。
+func _get_auto_advance_seconds() -> float:
+	return lerp(AUTO_ADVANCE_SECONDS_SLOWEST, AUTO_ADVANCE_SECONDS_FASTEST, auto_advance_speed_ratio)
 
 
 # ------------------------------

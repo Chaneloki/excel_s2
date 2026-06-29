@@ -235,7 +235,7 @@ cyberpunk全息、華麗魔法少女、普通RPG道具欄。
 | Story Dialogue UI 零件 | 🔶 v0.1進行中 | `02_story_dialogue_ui_demo.*`，規格見 story_dialogue_ui_component_spec_v0.1.md，目前是暫時單檔prototype，之後拆成DialogueBox/NamePlate/CharacterSpriteLayer等子零件 |
 | Excel解謎器 - SUMIF / VLOOKUP / INDEX+MATCH / 日期 / 文本函數 | ⏳ 未開始 | 沿用COUNTIF的`_parse_xxx`/`_evaluate_xxx`模式逐個擴充 |
 | 地圖走查系統 - 2D熱點原型 | ✅ 已完成 | `03_map_walker_hotspot_demo.*`，見 [2godot_project](2godot_project)，純2D環境插畫+熱點彈出特寫卡機制已驗證可動，內容為占位文字，尚未串接案件1真實熱點/特寫卡素材 |
-| Save/Load UI | ⏳ 未開始 | 畫面規則見ui_style_guide第9節 |
+| Save/Load UI | 🔶 存讀檔邏輯已真正可動，獨立UI場景未開始 | 新增`06_save_system.gd`（`SaveSystem`），把存讀檔從「只有版面、不寫資料」升級成真的寫進`user://saves/`的JSON檔；目前接在`02_story_dialogue_ui_demo.gd`既有的存讀檔彈窗上（沿用其mockup版面），可保存/讀取目前對白進度跟案件目標完成狀態。仍待做：獨立的Save/Load UI場景（從主選單直接進入，不依附Story Dialogue UI）、存檔資料隨案件資料結構擴充更多欄位。畫面規則見ui_style_guide第9節 |
 | Settings UI | ⏳ 未開始 | 畫面規則見ui_style_guide第10節 |
 | 案件資料結構（JSON/資料檔，跟UI解耦） | ⏳ 未開始 | 純資料，方便之後換案件不用動程式邏輯。需求補充（2026-06-29，來自Excel解謎器COUNTIF原型開發時發現）：Excel解謎器右側「案件目標」「公式提示」框、頂部「第1章：第一份委託」章節牌文字，目前都是COUNTIF原型demo內寫死的占位資料，但實際上每一章節教學內容/可用函數/章節名稱/案件目標都不同，這份資料結構要包含「每章節名稱」「每章節可用函數清單」「每章節案件目標清單」，COUNTIF原型之後要改成讀這份資料顯示，不是自己內部硬寫。需求補充（2026-06-29，來自Story Dialogue UI demo開發時發現）：Story Dialogue UI的「案件目標」面板、對白內容（`DIALOGUE_LINES`）、每句話顯示哪個角色立繪/姓名牌文字，目前同樣是`02_story_dialogue_ui_demo.gd`內寫死的占位資料，但實際上每個章節/案件的劇本、案件目標、出場角色都不同——這份資料結構也要包含「每章節對白腳本（含每句的speaker_id/姓名/文字/類型）」「每章節登場角色立繪對照」，Story Dialogue UI之後要改成讀這份資料顯示，不是自己內部硬寫。換句話說，這個零件做出來時，至少要同時滿足Excel解謎器跟Story Dialogue UI兩邊demo已經發現的需求 |
 | 收藏清單UI（呼應莉莉M-001、M-002…故障器具收藏癖） | ⏳ 未開始，待排入 | 地圖走查熱點之後會分「關鍵線索／純風味／收藏品」三種類型，收藏品熱點目前先只彈簡單提示（例如「已收藏：M-0XX」），完整的收藏清單畫面（瀏覽已收集器具、編號管理）是獨立零件，先排入待辦，不跟地圖走查原型混著做 |
