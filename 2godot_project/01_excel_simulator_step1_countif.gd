@@ -2,6 +2,37 @@ extends Control
 
 # ------------------------------
 # 異動紀錄 (Change Log):
+# 2026-06-29（第九輪，修正指向模式插入位置跑到"="之前的bug）：
+#   玩家回報：指向模式點別的格子插入參照後，新參照永遠跑到公式最前面
+#   （"="字元之前），不是游標原本打字打到的位置。根因：_try_insert_
+#   reference_in_active_formula()原本直接讀active_input.caret_column，
+#   但這格在點擊當下可能已經因為失焦被重置成0（caret_column歸零），讀
+#   到的不是玩家真正的游標位置。
+#   第一次嘗試改成訂閱LineEdit的caret_changed訊號記錄游標位置，但
+#   LineEdit在Godot 4根本沒有這個訊號（那是TextEdit才有的，連錯了），
+#   執行時直接報錯。改成新增_process()：只要目前編輯中的格子還有焦點，
+#   每個畫面更新都把它當下的caret_column記錄進editable_cell_last_caret，
+#   插入參照時改讀這份紀錄（最多落後一個畫面更新，肉眼感覺不出延遲），
+#   不直接讀當下可能已經被重置的caret_column。
+# 2026-06-29（第八輪，公式編輯「指向模式」）：
+#   新增真實Excel的「指向模式」：編輯中的格子如果內容是以"="開頭、還沒
+#   打完的公式，這時候點別的格子（不管是鎖住的資料格還是別的可編輯格）
+#   不會結束編輯、換成選取那一格，而是把那一格的參照（例如"A2"）插進
+#   公式目前游標所在的位置，焦點留在原本編輯中的格子，可以接著打字。
+#   新增_try_insert_reference_in_active_formula()：不假設Godot內部「點擊
+#   搶焦點」跟gui_input訊號的執行順序誰先誰後，改成不管當下active_cell_id
+#   有沒有已經失焦，都從row_formulas讀目前公式內容、插入新參照後明確
+#   呼叫grab_focus()把焦點搶回編輯中的格子，行為不依賴猜測內部事件順序。
+#   點擊自己正在編輯的那一格不算插入，維持LineEdit原生的「點擊移動游標」
+#   行為。_on_cell_gui_input()在原本的選取/拖曳邏輯之前先檢查這個情況。
+# 2026-06-29（第七輪，修正公式提示清單重複維護的問題）：
+#   玩家發現右側「公式提示」框的內容跟FORMULA_HINTS常數（紀錄哪些函數
+#   already實裝的單一資料來源）是兩份各自手寫、需要手動同步的清單——
+#   這次新增IF時有同步改到，但這種寫法本來就容易漏改。改成
+#   _build_right_sidebar()直接迴圈FORMULA_HINTS、只列出available=true
+#   的項目，不再另外寫一份。（案件目標／公式提示要隨章節變動，屬於
+#   readme規劃裡還沒開始的「案件資料結構」零件範圍，先不在這個COUNTIF
+#   原型裡提前處理，避免違反零件先行規則。）
 # 2026-06-29（第六輪，"&"字串連接＋IF()巢狀公式）：
 #   補上王佩丰教學第九講剩下兩個沒做的部分：
 #   1. "&"字串連接（=countif(A2:A3,A2&"*")）：COUNTIF/COUNTIFS的條件
@@ -466,6 +497,7 @@ var editable_cells: Dictionary = {}             # "G2" -> LineEdit節點
 var fill_handle_nodes: Dictionary = {}          # "G2" -> 拖拉填滿手把節點
 var editable_cell_wrappers: Dictionary = {}     # "G2" -> 該格的wrapper Control，編輯時用來調整z_index
 var editable_cell_base_width: Dictionary = {}   # "G2" -> 該格原始欄寬，離開編輯狀態時要收回這個寬度
+var editable_cell_last_caret: Dictionary = {}   # "G2" -> 編輯中最後一次記錄到的游標位置（caret_column失焦後可能被重置成0，不能直接讀，要自己持續追蹤）
 var status_cell_by_row: Dictionary = {}         # row(int) -> COL_STATUS那一格的LineEdit節點
 var row_formulas: Dictionary = {}               # "G2" -> 玩家打的公式原文
 var all_cell_nodes: Dictionary = {}             # 所有格子（鎖住+可編輯）："A2" -> LineEdit節點
@@ -507,6 +539,7 @@ func _ready() -> void:
 	fill_handle_nodes.clear()
 	editable_cell_wrappers.clear()
 	editable_cell_base_width.clear()
+	editable_cell_last_caret.clear()
 	overflow_ignored_cell_ids.clear()
 	status_cell_by_row.clear()
 	row_formulas.clear()
@@ -981,20 +1014,21 @@ func _build_right_sidebar() -> PanelContainer:
 	_apply_label_style(title_hint, SIDEBAR_CARD_TITLE_FONT_SIZE, COLOR_TEXT_BRIGHT)
 	hint_vbox.add_child(title_hint)
 
-	var hints = [
-		{"f": "COUNTIF", "d": "計算符合條件的儲存格數量"},
-		{"f": "COUNTIFS", "d": "計算同時符合多個條件的儲存格數量"},
-		{"f": "IF", "d": "依條件成立與否回傳不同結果"},
-		{"f": "SUMIFS", "d": "依多重條件加總數值"},
-	]
-
-	for h in hints:
+	# 直接從FORMULA_HINTS（公式運算核心新增一個函數時也要同步更新的單一
+	# 資料來源）動態產生，不再另外手寫一份清單——之前這裡跟FORMULA_HINTS
+	# 是兩份各自維護的資料，COUNTIF/COUNTIFS/IF陸續加進來時很容易漏改
+	# 其中一份，導致畫面跟「目前實際支援的函數」對不上。只列出目前已
+	# 實裝(available=true)的函數，呼應這個畫面是給玩家查「現在能用什麼」
+	# ，不是完整函數清單。
+	for h in FORMULA_HINTS:
+		if not h["available"]:
+			continue
 		var hb = VBoxContainer.new()
 		var l1 = Label.new()
-		l1.text = h["f"]
+		l1.text = h["name"]
 		_apply_label_style(l1, FORMULA_HINT_NAME_FONT_SIZE, COLOR_TEXT_BRIGHT)
 		var l2 = Label.new()
-		l2.text = h["d"]
+		l2.text = h["desc"]
 		_apply_label_style(l2, FORMULA_HINT_DESC_FONT_SIZE, COLOR_TEXT_MUTED)
 		hb.add_child(l1)
 		hb.add_child(l2)
@@ -1326,6 +1360,24 @@ func _on_editable_cell_text_changed(_new_text: String, cell_id: String) -> void:
 		_refresh_editable_cell_overflow_width(cell_id)
 
 
+# 持續記錄目前編輯中格子的游標位置——caret_column這個屬性在格子失去
+# 焦點後可能被重置成0（例如點別的格子觸發指向模式時），如果到那個時候
+# 才去讀caret_column，讀到的就已經不是玩家原本打字打到的位置，而是
+# 錯誤的0（插入點變成整段公式最前面，跑到"="字元之前）。
+#
+# LineEdit在Godot 4沒有caret_changed這種訊號可以訂閱（那是TextEdit才有
+# 的），改成在_process()裡每一格都輪詢一次：只要目前還有焦點，就把它
+# 目前的caret_column記錄下來，最多落後一個畫面更新（約16ms），實際上
+# 感覺不出延遲，但能保證在失焦前的那一刻已經記到最新位置，不會讀到
+# 失焦後才出現的歸零值。
+func _process(_delta: float) -> void:
+	if active_cell_id == "" or not editable_cells.has(active_cell_id):
+		return
+	var input: LineEdit = editable_cells[active_cell_id]
+	if input.has_focus():
+		editable_cell_last_caret[active_cell_id] = input.caret_column
+
+
 # 量測目前文字的實際顯示寬度，跟這格原始欄寬比較，取較大值＋緩衝當作
 # LineEdit這次要顯示的寬度——文字沒超出欄寬就維持原寬度，超出才溢出。
 func _refresh_editable_cell_overflow_width(cell_id: String) -> void:
@@ -1466,6 +1518,15 @@ func _on_cell_gui_input(event: InputEvent, cell_id: String) -> void:
 		return
 
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		# 對齊真實Excel的「指向模式」：正在編輯一個以"="開頭、還沒打完的
+		# 公式時，點別的格子不是要換格結束編輯，是要把那一格的參照插進
+		# 公式游標位置、繼續留在編輯狀態。命中就直接return，不要再往下
+		# 跑selection-drag那一段（那是給「沒在編輯公式」時，點格子單純
+		# 用來選取範圍的邏輯）。
+		if _try_insert_reference_in_active_formula(cell_id):
+			accept_event()
+			return
+
 		var col := _extract_column_letter(cell_id)
 		var row := int(cell_id.substr(col.length()))
 		var col_index = current_column_order.find(col)
@@ -1477,6 +1538,45 @@ func _on_cell_gui_input(event: InputEvent, cell_id: String) -> void:
 		selection_current_col_index = col_index
 		selection_current_row = row
 		_refresh_rect_selection()
+
+
+# 試著把目前點到的格子(clicked_cell_id)當成參照插進「正在編輯中」的
+# 公式格子(active_cell_id)的游標位置。回傳true代表真的插入了（呼叫端
+# 要把這次點擊吃掉、不要再當成一般選取處理）；回傳false代表現在不是
+# 指向模式（例如目前沒有任何格子在編輯、或編輯中的內容不是以"="開頭的
+# 公式、或點的剛好是自己正在編輯的那一格本身——點自己應該維持LineEdit
+# 原生的「點擊移動游標」行為，不該被當成插入參照）。
+#
+# 不假設Godot內部「點擊搶焦點」跟這個gui_input訊號的執行順序誰先誰後
+# （兩種順序都有可能，且不同版本/設定可能不一樣）：不管點擊當下是否已經
+# 讓active_cell_id那一格失去焦點，這裡都用row_formulas（不是直接讀
+# LineEdit.text，避免讀到失焦commit後可能被改寫的顯示值）取得目前公式
+# 內容，插入新參照後，明確呼叫grab_focus()把焦點"搶"回編輯中的格子——
+# 不管點擊的瞬間焦點有沒有先被偷走，最終結果都會回到編輯中的格子，
+# 行為穩定不依賴內部事件順序的猜測。
+func _try_insert_reference_in_active_formula(clicked_cell_id: String) -> bool:
+	if clicked_cell_id == active_cell_id:
+		return false
+	if active_cell_id == "" or not editable_cells.has(active_cell_id):
+		return false
+
+	var active_input: LineEdit = editable_cells[active_cell_id]
+	var current_text: String = row_formulas.get(active_cell_id, active_input.text)
+	if not current_text.strip_edges().begins_with("="):
+		return false
+
+	# 不直接讀active_input.caret_column——這格如果已經因為這次點擊失焦，
+	# caret_column可能已經被重置成0，要改讀_on_editable_cell_caret_changed()
+	# 持續記錄下來的「最後一次還在編輯時的游標位置」。找不到紀錄就退回
+	# 文字結尾（沒打過字的情況，例如剛進入編輯就直接點別的格）。
+	var caret_pos: int = clamp(editable_cell_last_caret.get(active_cell_id, current_text.length()), 0, current_text.length())
+	var new_text = current_text.substr(0, caret_pos) + clicked_cell_id + current_text.substr(caret_pos)
+
+	row_formulas[active_cell_id] = new_text
+	active_input.grab_focus()
+	active_input.text = new_text
+	active_input.caret_column = caret_pos + clicked_cell_id.length()
+	return true
 
 
 # fx公式列跟格子內編輯共用同一套F4循環邏輯。
