@@ -226,8 +226,9 @@ const SIDEBAR_TAB_LABELS := ["證言", "物證", "名冊", "交易紀錄"]
 const FORMULA_HINTS := [
 	{"name": "COUNTIF", "desc": "計算符合條件的儲存格數量", "available": true},
 	{"name": "COUNTIFS", "desc": "計算同時符合多個條件的儲存格數量", "available": true},
+	{"name": "SUMIF", "desc": "依條件加總數值", "available": true},
+	{"name": "SUMIFS", "desc": "依多重條件加總數值", "available": true},
 	{"name": "IF", "desc": "依條件成立與否回傳不同結果", "available": true},
-	{"name": "SUMIFS", "desc": "依多重條件加總數值", "available": false},
 	{"name": "XLOOKUP", "desc": "在範圍或陣列中查找對應值", "available": false},
 	{"name": "LEFT", "desc": "擷取字串左側指定字元數", "available": false},
 	{"name": "MID", "desc": "擷取字串中間指定字元數", "available": false},
@@ -529,6 +530,17 @@ var selection_current_col_index: int = -1
 var selection_current_row: int = -1
 var selected_cell_ids: Array = []
 
+# 公式編輯「指向模式」拖曳選取範圍狀態：對齊真實Excel，編輯中的公式
+# 點選其他格子不是換格選取，是把參照插進公式；如果不是單點、而是拖曳
+# 過多個格子，插進去的要是"A2:B5"這種範圍參照，且要隨拖曳即時更新成
+# 目前框住的範圍（不是每次移動都疊加插入新的一段）。
+var is_pointing_range: bool = false
+var pointing_target_cell_id: String = ""   # 正在編輯中、要被插入參照的那個公式格
+var pointing_anchor_cell_id: String = ""   # 拖曳起點格（按下滑鼠時點到的那一格）
+var pointing_current_cell_id: String = ""  # 拖曳目前框到的那一格，跟上次相同就不重算，避免每個MouseMotion事件都重插入一次
+var pointing_insert_start: int = -1        # 插入的參照文字在公式裡的起始游標位置
+var pointing_insert_end: int = -1          # 插入的參照文字在公式裡的結束游標位置，拖曳更新範圍時用來替換掉上一次插入的內容
+
 
 # ------------------------------------------------------------
 # 2. 畫面建構
@@ -579,7 +591,7 @@ func _ready() -> void:
 
 	result_label = Label.new()
 	result_label.name = "ResultLabel"
-	result_label.text = "目前請使用 COUNTIF／COUNTIFS／IF 檢查證言狀態。"
+	result_label.text = "目前請使用 COUNTIF／COUNTIFS／SUMIF／SUMIFS／IF 檢查證言狀態。"
 	_apply_label_style(result_label, RESULT_FONT_SIZE, COLOR_TEXT_MAIN)
 	bottom_hbox.add_child(result_label)
 
@@ -1519,11 +1531,11 @@ func _on_cell_gui_input(event: InputEvent, cell_id: String) -> void:
 
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		# 對齊真實Excel的「指向模式」：正在編輯一個以"="開頭、還沒打完的
-		# 公式時，點別的格子不是要換格結束編輯，是要把那一格的參照插進
-		# 公式游標位置、繼續留在編輯狀態。命中就直接return，不要再往下
-		# 跑selection-drag那一段（那是給「沒在編輯公式」時，點格子單純
-		# 用來選取範圍的邏輯）。
-		if _try_insert_reference_in_active_formula(cell_id):
+		# 公式時，點/拖曳別的格子不是要換格結束編輯，是要把那一格（或拖曳
+		# 框住的整個範圍）的參照插進公式游標位置、繼續留在編輯狀態。命中
+		# 就直接return，不要再往下跑selection-drag那一段（那是給「沒在
+		# 編輯公式」時，點格子單純用來選取範圍的邏輯）。
+		if _try_begin_formula_pointing(cell_id):
 			accept_event()
 			return
 
@@ -1540,21 +1552,21 @@ func _on_cell_gui_input(event: InputEvent, cell_id: String) -> void:
 		_refresh_rect_selection()
 
 
-# 試著把目前點到的格子(clicked_cell_id)當成參照插進「正在編輯中」的
-# 公式格子(active_cell_id)的游標位置。回傳true代表真的插入了（呼叫端
-# 要把這次點擊吃掉、不要再當成一般選取處理）；回傳false代表現在不是
-# 指向模式（例如目前沒有任何格子在編輯、或編輯中的內容不是以"="開頭的
-# 公式、或點的剛好是自己正在編輯的那一格本身——點自己應該維持LineEdit
-# 原生的「點擊移動游標」行為，不該被當成插入參照）。
+# 試著開始一段「指向模式」的拖曳：如果現在符合「正在編輯一個以"="開頭、
+# 還沒打完的公式，且點到的不是自己正在編輯的那一格」，就把這次點擊當成
+# 拖曳範圍參照的起點，回傳true代表呼叫端要把這次點擊吃掉、不要再當成
+# 一般選取處理；回傳false代表現在不是指向模式（例如目前沒有任何格子在
+# 編輯、編輯中的內容不是公式、或點的剛好是自己正在編輯的那一格本身——
+# 點自己應該維持LineEdit原生的「點擊移動游標」行為）。
 #
 # 不假設Godot內部「點擊搶焦點」跟這個gui_input訊號的執行順序誰先誰後
 # （兩種順序都有可能，且不同版本/設定可能不一樣）：不管點擊當下是否已經
 # 讓active_cell_id那一格失去焦點，這裡都用row_formulas（不是直接讀
 # LineEdit.text，避免讀到失焦commit後可能被改寫的顯示值）取得目前公式
-# 內容，插入新參照後，明確呼叫grab_focus()把焦點"搶"回編輯中的格子——
-# 不管點擊的瞬間焦點有沒有先被偷走，最終結果都會回到編輯中的格子，
-# 行為穩定不依賴內部事件順序的猜測。
-func _try_insert_reference_in_active_formula(clicked_cell_id: String) -> bool:
+# 內容，每次插入/更新參照後都明確呼叫grab_focus()把焦點"搶"回編輯中的
+# 格子——不管點擊的瞬間焦點有沒有先被偷走，最終結果都會回到編輯中的
+# 格子，行為穩定不依賴內部事件順序的猜測。
+func _try_begin_formula_pointing(clicked_cell_id: String) -> bool:
 	if clicked_cell_id == active_cell_id:
 		return false
 	if active_cell_id == "" or not editable_cells.has(active_cell_id):
@@ -1570,13 +1582,57 @@ func _try_insert_reference_in_active_formula(clicked_cell_id: String) -> bool:
 	# 持續記錄下來的「最後一次還在編輯時的游標位置」。找不到紀錄就退回
 	# 文字結尾（沒打過字的情況，例如剛進入編輯就直接點別的格）。
 	var caret_pos: int = clamp(editable_cell_last_caret.get(active_cell_id, current_text.length()), 0, current_text.length())
-	var new_text = current_text.substr(0, caret_pos) + clicked_cell_id + current_text.substr(caret_pos)
 
-	row_formulas[active_cell_id] = new_text
-	active_input.grab_focus()
-	active_input.text = new_text
-	active_input.caret_column = caret_pos + clicked_cell_id.length()
+	is_pointing_range = true
+	pointing_target_cell_id = active_cell_id
+	pointing_anchor_cell_id = clicked_cell_id
+	pointing_current_cell_id = clicked_cell_id
+	pointing_insert_start = caret_pos
+	pointing_insert_end = caret_pos
+	_apply_pointing_reference(clicked_cell_id)
 	return true
+
+
+# 把目前指向模式拖曳框住的範圍（anchor格到current_cell_id格）算成參照
+# 文字，取代掉公式裡上一次插入的那一段（不是每次拖曳移動都疊加插入新的
+# 一段），對齊真實Excel拖曳時公式列會即時更新成目前框住範圍的行為。
+# 範圍兩端剛好是同一格時只插入單一儲存格參照（不加冒號），跟單點點擊
+# 結果一致；拖曳出矩形範圍時插入"A2:B5"這種正規化過（左上:右下）的
+# 範圍參照，不管實際拖曳方向（從哪個角拖到哪個角）結果都一樣，呼應
+# 真實Excel範圍參照永遠是正規化過的寫法。
+func _apply_pointing_reference(current_cell_id: String) -> void:
+	var anchor_col := _extract_column_letter(pointing_anchor_cell_id)
+	var anchor_row := int(pointing_anchor_cell_id.substr(anchor_col.length()))
+	var current_col := _extract_column_letter(current_cell_id)
+	var current_row := int(current_cell_id.substr(current_col.length()))
+
+	var anchor_col_index := current_column_order.find(anchor_col)
+	var current_col_index := current_column_order.find(current_col)
+	if anchor_col_index == -1 or current_col_index == -1:
+		return
+
+	var col_lo: int = min(anchor_col_index, current_col_index)
+	var col_hi: int = max(anchor_col_index, current_col_index)
+	var row_lo: int = min(anchor_row, current_row)
+	var row_hi: int = max(anchor_row, current_row)
+
+	var reference_text: String
+	if col_lo == col_hi and row_lo == row_hi:
+		reference_text = current_column_order[col_lo] + str(row_lo)
+	else:
+		reference_text = "%s%d:%s%d" % [current_column_order[col_lo], row_lo, current_column_order[col_hi], row_hi]
+
+	var active_input: LineEdit = editable_cells[pointing_target_cell_id]
+	var current_text: String = row_formulas.get(pointing_target_cell_id, active_input.text)
+	var new_text := current_text.substr(0, pointing_insert_start) + reference_text + current_text.substr(pointing_insert_end)
+	var new_caret := pointing_insert_start + reference_text.length()
+
+	row_formulas[pointing_target_cell_id] = new_text
+	active_input.text = new_text
+	active_input.grab_focus()
+	active_input.caret_column = new_caret
+	editable_cell_last_caret[pointing_target_cell_id] = new_caret
+	pointing_insert_end = new_caret
 
 
 # fx公式列跟格子內編輯共用同一套F4循環邏輯。
@@ -1683,9 +1739,10 @@ func _on_fill_handle_gui_input(event: InputEvent, source_row: int) -> void:
 		accept_event()
 
 
-# 統一處理「拖拉填滿」跟「矩形範圍選取」兩種拖曳中的滑鼠移動/放開，用
-# _input()（在GUI事件分派之前就會收到），避免拖曳途中滑鼠經過其他格子時
-# 被那些格子自己的焦點/點擊邏輯打斷。兩種拖曳互斥，依is_filling優先判斷。
+# 統一處理「拖拉填滿」「矩形範圍選取」「公式指向模式拖曳範圍」三種拖曳
+# 中的滑鼠移動/放開，用_input()（在GUI事件分派之前就會收到），避免拖曳
+# 途中滑鼠經過其他格子時被那些格子自己的焦點/點擊邏輯打斷。三種拖曳
+# 互斥，依is_filling -> is_pointing_range -> is_selecting優先順序判斷。
 func _input(event: InputEvent) -> void:
 	if is_filling:
 		if event is InputEventMouseMotion:
@@ -1693,6 +1750,20 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 			_finish_fill_drag()
+			get_viewport().set_input_as_handled()
+	elif is_pointing_range:
+		if event is InputEventMouseMotion:
+			_update_pointing_drag_target(event.global_position)
+			get_viewport().set_input_as_handled()
+		elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+			# 跟拖拉填滿一樣要吃掉這個放開事件，不能讓它繼續往下傳給GUI——
+			# 否則放開滑鼠時如果剛好停在別的編輯格上面，那一格會搶走焦點，
+			# 把玩家拉出原本正在編輯的公式格。最後再保險呼叫一次grab_focus()，
+			# 確保焦點確實留在公式格上。
+			is_pointing_range = false
+			var target_input: LineEdit = editable_cells.get(pointing_target_cell_id)
+			if target_input != null:
+				target_input.grab_focus()
 			get_viewport().set_input_as_handled()
 	elif is_selecting:
 		if event is InputEventMouseMotion:
@@ -1703,6 +1774,42 @@ func _input(event: InputEvent) -> void:
 			# 還要繼續往下傳給GUI正常分派，讓被點到的LineEdit能完成它自己
 			# 的「點擊→取得焦點→可以打字」流程。
 			is_selecting = false
+
+
+# 拖曳中即時找出滑鼠目前最接近哪一格，跟_update_selection_drag_target()
+# 邏輯相同（找最近的欄表頭/列表頭），只是找到後改呼叫_apply_pointing_reference()
+# 更新公式裡的範圍參照，不是更新選取高亮。
+func _update_pointing_drag_target(global_pos: Vector2) -> void:
+	var closest_row := -1
+	var closest_row_distance := INF
+	for r in row_header_nodes:
+		var node: Button = row_header_nodes[r]
+		var center_y = node.get_global_rect().get_center().y
+		var distance = abs(global_pos.y - center_y)
+		if distance < closest_row_distance:
+			closest_row_distance = distance
+			closest_row = r
+
+	var closest_col := ""
+	var closest_col_distance := INF
+	for col in current_column_order:
+		if col_header_nodes.has(col):
+			var node: Button = col_header_nodes[col]
+			var center_x = node.get_global_rect().get_center().x
+			var distance = abs(global_pos.x - center_x)
+			if distance < closest_col_distance:
+				closest_col_distance = distance
+				closest_col = col
+
+	if closest_row == -1 or closest_col == "":
+		return
+
+	var current_cell_id := closest_col + str(closest_row)
+	if current_cell_id == pointing_current_cell_id or not all_cell_nodes.has(current_cell_id):
+		return
+
+	pointing_current_cell_id = current_cell_id
+	_apply_pointing_reference(current_cell_id)
 
 
 func _update_selection_drag_target(global_pos: Vector2) -> void:
@@ -1858,7 +1965,7 @@ func _shift_relative_reference(formula: String, from_row: int, to_row: int) -> S
 
 # 找不到、找不到函數對應的回應一律用偵探系統語氣（嚴格規則11），不顯示
 # 技術性錯誤訊息。
-const MSG_UNSUPPORTED_FORMULA := "目前案件用不到這個指令，先專心查 COUNTIF／COUNTIFS／IF 試試看。"
+const MSG_UNSUPPORTED_FORMULA := "目前案件用不到這個指令，先專心查 COUNTIF／COUNTIFS／SUMIF／SUMIFS／IF 試試看。"
 
 # 依函數名稱分派到對應的運算函式，是新增公式（SUMIF/VLOOKUP……）時唯一
 # 要擴充的地方——對應readme「沿用COUNTIF的_parse_xxx/_evaluate_xxx模式
@@ -1874,6 +1981,10 @@ func _evaluate_formula(raw_text: String) -> Dictionary:
 			return _evaluate_countif(parsed["args"])
 		"COUNTIFS":
 			return _evaluate_countifs(parsed["args"])
+		"SUMIF":
+			return _evaluate_sumif(parsed["args"])
+		"SUMIFS":
+			return _evaluate_sumifs(parsed["args"])
 		"IF":
 			return _evaluate_if(parsed["args"])
 		_:
@@ -1942,6 +2053,92 @@ func _evaluate_countifs(args: Array) -> Dictionary:
 		args_display += args[i]
 	var message = "=COUNTIFS(%s) 結果 = %d" % [args_display, count]
 	return {"ok": true, "value": count, "message": message}
+
+
+# =SUMIF(條件範圍,條件,[加總範圍])：跟COUNTIF共用同一套_flatten_range()／
+# _matches_criteria()判斷哪些格子符合條件，差別只在符合時不是+1而是把
+# 「加總範圍」對應位置的數值加進去。加總範圍可省略，省略時直接加總條件
+# 範圍本身（對齊真實Excel的省略寫法）；兩個範圍展開後的格數必須一致，
+# 才能逐一對應「這格符合條件→加總範圍裡同位置那格的數值」。
+func _evaluate_sumif(args: Array) -> Dictionary:
+	if args.size() != 2 and args.size() != 3:
+		return {"ok": false, "value": null, "message": "SUMIF 需要2或3個參數：條件範圍、條件、(可省略)加總範圍，例如 =SUMIF(C2:C9,\"地點1\",D2:D9)。"}
+
+	var range_text: String = args[0]
+	var criteria_text: String = args[1]
+	var sum_range_text: String = args[2] if args.size() == 3 else range_text
+
+	var range_ids = _flatten_range(range_text)
+	if range_ids.is_empty():
+		return {"ok": false, "value": null, "message": "找不到範圍 %s 的資料，請確認儲存格座標。" % range_text}
+
+	var sum_range_ids = _flatten_range(sum_range_text)
+	if sum_range_ids.is_empty():
+		return {"ok": false, "value": null, "message": "找不到範圍 %s 的資料，請確認儲存格座標。" % sum_range_text}
+
+	if sum_range_ids.size() != range_ids.size():
+		return {"ok": false, "value": null, "message": "SUMIF 的條件範圍跟加總範圍大小必須一致，請檢查 %s 跟 %s。" % [range_text, sum_range_text]}
+
+	var total := 0.0
+	for i in range(range_ids.size()):
+		if _matches_criteria(cell_value_lookup.get(range_ids[i], ""), criteria_text):
+			total += _cell_numeric_value(sum_range_ids[i])
+
+	var args_display: String = range_text + "," + criteria_text
+	if args.size() == 3:
+		args_display += "," + sum_range_text
+	var message = "=SUMIF(%s) 結果 = %s" % [args_display, _format_number(total)]
+	return {"ok": true, "value": total, "message": message}
+
+
+# =SUMIFS(加總範圍,條件範圍1,條件1,條件範圍2,條件2,……)：跟COUNTIFS一樣
+# 每組條件範圍/條件成對出現，但第一個參數固定是「要加總的範圍」（這點跟
+# SUMIF不同——SUMIF的加總範圍放最後且可省略，SUMIFS的加總範圍放最前且
+# 必填，對齊真實Excel兩個函數引數順序不同的習慣），所有範圍大小必須
+# 一致，逐個index檢查是否同時符合每一組條件，全部符合才把加總範圍對應
+# 位置的數值加進去。
+func _evaluate_sumifs(args: Array) -> Dictionary:
+	if args.size() < 3 or args.size() % 2 != 1:
+		return {"ok": false, "value": null, "message": "SUMIFS 需要加總範圍加上成對的條件範圍與條件，例如 =SUMIFS(D2:D9,C2:C9,\"地點1\")。"}
+
+	var sum_range_text: String = args[0]
+	var sum_range_ids = _flatten_range(sum_range_text)
+	if sum_range_ids.is_empty():
+		return {"ok": false, "value": null, "message": "找不到範圍 %s 的資料，請確認儲存格座標。" % sum_range_text}
+
+	var pair_count = (args.size() - 1) / 2
+	var range_lists: Array = []
+	var criteria_list: Array = []
+	var expected_size: int = sum_range_ids.size()
+
+	for i in range(pair_count):
+		var range_text: String = args[1 + i * 2]
+		var range_ids = _flatten_range(range_text)
+		if range_ids.is_empty():
+			return {"ok": false, "value": null, "message": "找不到範圍 %s 的資料，請確認儲存格座標。" % range_text}
+		if range_ids.size() != expected_size:
+			return {"ok": false, "value": null, "message": "SUMIFS 的每一組範圍大小必須一致，請檢查 %s。" % range_text}
+		range_lists.append(range_ids)
+		criteria_list.append(args[1 + i * 2 + 1])
+
+	var total := 0.0
+	for index in range(expected_size):
+		var all_match := true
+		for p in range(pair_count):
+			var cell_id = range_lists[p][index]
+			if not _matches_criteria(cell_value_lookup.get(cell_id, ""), criteria_list[p]):
+				all_match = false
+				break
+		if all_match:
+			total += _cell_numeric_value(sum_range_ids[index])
+
+	var args_display := ""
+	for i in range(args.size()):
+		if i > 0:
+			args_display += ","
+		args_display += args[i]
+	var message = "=SUMIFS(%s) 結果 = %s" % [args_display, _format_number(total)]
+	return {"ok": true, "value": total, "message": message}
 
 
 # =IF(條件,條件成立時的結果,條件不成立時的結果)：對齊王佩丰教學
@@ -2338,3 +2535,20 @@ func _wildcard_match(value: String, pattern: String) -> bool:
 	var regex = RegEx.new()
 	regex.compile(regex_pattern)
 	return regex.search(value.to_upper()) != null
+
+
+# SUMIF/SUMIFS加總時用：把某一格目前的值轉成數字，非數字內容（空格、
+# 文字）視為0，呼應真實Excel「SUM系列函數忽略文字、只加數字」的行為。
+func _cell_numeric_value(cell_id: String) -> float:
+	var raw: String = cell_value_lookup.get(cell_id, "")
+	if raw.is_valid_float():
+		return raw.to_float()
+	return 0.0
+
+
+# SUMIF/SUMIFS的結果顯示用：整數值不要顯示多餘的".0"，有小數的話只保留
+# 兩位，避免浮點數運算誤差（例如100.00000001）顯示出一長串小數。
+func _format_number(value: float) -> String:
+	if is_equal_approx(value, round(value)):
+		return str(int(round(value)))
+	return "%.2f" % value

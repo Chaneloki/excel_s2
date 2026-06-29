@@ -233,7 +233,8 @@ cyberpunk全息、華麗魔法少女、普通RPG道具欄。
 | Excel解謎器 - COUNTIF原型 | ✅ Mockup精準重建完成（第1、2批素材，第3批決定不做） | `01_excel_simulator_step1_countif.*`，見 [2godot_project](2godot_project)，公式邏輯/選取/拖曳填滿已驗證可動；視覺已依`excel_solver_ui_mockup.png`重建頂部列、左側面板、公式列、右側案件目標/公式提示框。原規劃第3批（六個公式圖示＋底部提示框/徽章）已決定不做，目前底部系統提示列維持原本純色細邊框占位樣式，公式提示清單維持純文字，不影響功能 |
 | UI運行時調校工具（debug用，非正式遊戲零件） | ✅ 已完成 | `05_ui_tweaker_tool.*`，見 [2godot_project](2godot_project)，可即時調整任何Control節點Position/Size/Scale並複製參數，用於輔助校正Vibe Coding寫死的座標數值 |
 | Story Dialogue UI 零件 | 🔶 v0.1進行中 | `02_story_dialogue_ui_demo.*`，規格見 story_dialogue_ui_component_spec_v0.1.md，目前是暫時單檔prototype，之後拆成DialogueBox/NamePlate/CharacterSpriteLayer等子零件 |
-| Excel解謎器 - SUMIF / VLOOKUP / INDEX+MATCH / 日期 / 文本函數 | ⏳ 未開始 | 沿用COUNTIF的`_parse_xxx`/`_evaluate_xxx`模式逐個擴充 |
+| Excel解謎器 - SUMIF/SUMIFS | ✅ 已完成 | 沿用COUNTIF的`_parse_xxx`/`_evaluate_xxx`模式擴充進`01_excel_simulator_step1_countif.gd`，跟COUNTIF/COUNTIFS共用同一套範圍/條件解析，不綁定特定問題的特定答案 |
+| Excel解謎器 - VLOOKUP / INDEX+MATCH / 日期 / 文本函數 | ⏳ 未開始 | 沿用COUNTIF的`_parse_xxx`/`_evaluate_xxx`模式逐個擴充 |
 | 地圖走查系統 - 2D熱點原型 | ✅ 已完成 | `03_map_walker_hotspot_demo.*`，見 [2godot_project](2godot_project)，純2D環境插畫+熱點彈出特寫卡機制已驗證可動，內容為占位文字，尚未串接案件1真實熱點/特寫卡素材 |
 | Save/Load UI | 🔶 存讀檔邏輯已真正可動，獨立UI場景未開始 | 新增`06_save_system.gd`（`SaveSystem`），把存讀檔從「只有版面、不寫資料」升級成真的寫進`user://saves/`的JSON檔；目前接在`02_story_dialogue_ui_demo.gd`既有的存讀檔彈窗上（沿用其mockup版面），可保存/讀取目前對白進度跟案件目標完成狀態。仍待做：獨立的Save/Load UI場景（從主選單直接進入，不依附Story Dialogue UI）、存檔資料隨案件資料結構擴充更多欄位。畫面規則見ui_style_guide第9節 |
 | Settings UI | ⏳ 未開始 | 畫面規則見ui_style_guide第10節 |
