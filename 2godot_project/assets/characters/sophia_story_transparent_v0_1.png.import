@@ -2,12 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dqao0n813vgv0"
-valid=false
+uid="uid://bjvwrlv1xnasa"
+path="res://.godot/imported/sophia_story_transparent_v0_1.png-749fa8e00a2dd118fcf6520e829ef2a3.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
-source_file="res://assets/ui/settings/slider_grabber.png"
+source_file="res://assets/characters/sophia_story_transparent_v0_1.png"
+dest_files=["res://.godot/imported/sophia_story_transparent_v0_1.png-749fa8e00a2dd118fcf6520e829ef2a3.ctex"]
 
 [params]
 

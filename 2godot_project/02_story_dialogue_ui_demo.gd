@@ -17,6 +17,7 @@ const UI_SKIN_DIR := "res://assets/ui/story_dialogue/"
 const CHARACTER_DIR := "res://assets/characters/"
 const BG_STORY_OFFICE := UI_SKIN_DIR + "bg_detective_office_rainy_night.png"
 const HOST_TEMP := CHARACTER_DIR + "host_lisia_story_transparent_v0_1.png"
+const SOPHIA_TEMP := CHARACTER_DIR + "host_lisia_story_transparent_v0_1.png"
 const BUTTON_NORMAL := UI_SKIN_DIR + "button_icon_frame_normal.png"
 const BUTTON_HOVER := UI_SKIN_DIR + "button_icon_frame_hover.png"
 const BUTTON_PRESSED := UI_SKIN_DIR + "button_icon_frame_pressed.png"
@@ -38,20 +39,18 @@ const UI_SKIN_SAVE_LOAD_DIR := "res://assets/ui/save_load/"
 const BG_SAVE_LOAD_OFFICE := UI_SKIN_SAVE_LOAD_DIR + "bg_save_load_office.png"
 const PANEL_SAVE_LOAD_MAIN := UI_SKIN_SAVE_LOAD_DIR + "panel_main_save_load.png"
 const SAVE_LOAD_SLOT_EMPTY := UI_SKIN_SAVE_LOAD_DIR + "slot_empty_normal.png"
+const SAVE_LOAD_SLOT_SAVED := UI_SKIN_SAVE_LOAD_DIR + "slot_saved_normal.png"
+const SAVE_LOAD_SLOT_SELECTED_FRAME := UI_SKIN_SAVE_LOAD_DIR + "frame_slot_selected.png"
 
 # 設定彈窗素材（使用生圖配合複製來的 main panel 與程式碼自繪 CheckBox 勾選樣式）。
 const UI_SKIN_SETTINGS_DIR := "res://assets/ui/settings/"
 const PANEL_SETTINGS_MAIN := UI_SKIN_SETTINGS_DIR + "panel_settings_main.png"
-const BUTTON_TAB_BG := UI_SKIN_SETTINGS_DIR + "button_tab_bg.png"
-const CHECKBOX_UNCHECKED := UI_SKIN_SETTINGS_DIR + "checkbox_unchecked.png"
-const SLIDER_GRABBER := UI_SKIN_SETTINGS_DIR + "slider_grabber.png"
-const SAVE_LOAD_SLOT_SAVED := UI_SKIN_SAVE_LOAD_DIR + "slot_saved_normal.png"
-const SAVE_LOAD_SLOT_SELECTED_FRAME := UI_SKIN_SAVE_LOAD_DIR + "frame_slot_selected.png"
+
 
 # ------------------------------
 # 設定區：色彩、字級與共用尺寸
 # ------------------------------
-const COLOR_TEXT_MAIN := "#f0eadb"
+const COLOR_TEXT_MAIN := "#ffffffff"
 const COLOR_TEXT_BRIGHT := "#f7f1e4"
 const COLOR_TEXT_MUTED := "#c9c2ae"
 const COLOR_TEXT_WHITE := "#ffffff"
@@ -59,18 +58,17 @@ const COLOR_ACCENT_GREEN := "#bde8cc"
 const COLOR_LINE_SILVER := "#c9d3c6aa"
 const COLOR_LINE_GOLD := "#b8a06d9a"
 const COLOR_PANEL_HEADER := "#10231fcc"
-const COLOR_SHADOW_SOFT := "#000000a8"
-const COLOR_SHADOW_DIALOGUE := "#000000c0"
-const COLOR_SHADOW_NAME := "#000000b0"
+const COLOR_SHADOW_SOFT := "#00000068"
+const COLOR_SHADOW_DIALOGUE := "#6666666d"
+const COLOR_SHADOW_NAME := "#6666666d"
 const COLOR_VIGNETTE := Color(0.0, 0.0, 0.0, 0.18)
 const COLOR_DIALOGUE_INNER_SHADOW := Color(0.0, 0.0, 0.0, 0.24)
 
-const FONT_MENU_LABEL := 13
-const FONT_POPUP_TITLE := 28
+const FONT_MENU_LABEL := 20
 const FONT_POPUP_CLOSE := 36
 const FONT_POPUP_BUTTON := 18
 const FONT_VOLUME_LABEL := 20
-const FONT_SAVE_LOAD_SLOT_TITLE := 26
+const FONT_SAVE_LOAD_SLOT_TITLE := 25
 const FONT_SAVE_LOAD_SLOT_CHAPTER := 20
 const FONT_SAVE_LOAD_SLOT_LOCATION := 17
 const FONT_SAVE_LOAD_SLOT_EMPTY_LABEL := 17
@@ -78,7 +76,7 @@ const FONT_LOG_SPEAKER := 17
 const FONT_LOG_TEXT := 20
 const FONT_OBJECTIVE_ITEM := 20
 const FONT_DIALOGUE_TEXT := 32
-const FONT_NAME_TEXT := 27
+const FONT_NAME_TEXT := 35
 
 const MENU_STACK_SIZE := Vector2(96, 56)
 
@@ -112,9 +110,9 @@ const STYLE_LOG_CONTENT_MARGIN := 10
 const STYLE_SAVE_LOAD_TEXTURE_MARGIN := 34
 const STYLE_SAVE_LOAD_CONTENT_MARGIN := 18
 
-const SHADOW_OFFSET_SMALL := Vector2(1, 1)
+const SHADOW_OFFSET_SMALL := Vector2(2, 2)
 const SHADOW_OFFSET_DIALOGUE := Vector2(2, 2)
-const AUTO_ADVANCE_SECONDS := 2.2
+const AUTO_ADVANCE_SECONDS := 2.0
 const BGM_VOLUME_INITIAL := 0.75
 const SFX_VOLUME_INITIAL := 0.80
 
@@ -130,7 +128,9 @@ const SLIDER_STEP := 0.01
 # 設定區：版面位置與間距
 # Vector4 依序代表 left、top、right、bottom。
 # ------------------------------
-const ANCHOR_HOST := Vector4(0.400, 0.000, 0.785, 1.000)
+const ANCHOR_CHAR := Vector4(0.400, 0.000, 0.785, 1.000)
+# 莉希雅 (Host) 的專屬位置：左下角，與對話框高度切齊 (0.650 ~ 0.945)
+const ANCHOR_HOST := Vector4(0.000, 0.500, 0.180, 1.000)
 const ANCHOR_TOP_MENU := Vector4(0.665, 0.020, 0.972, 0.122)
 const ANCHOR_SETTINGS_POPUP := Vector4(0.36, 0.22, 0.68, 0.55)
 const ANCHOR_SAVE_LOAD_POPUP := Vector4(0.0, 0.0, 1.0, 1.0)
@@ -164,7 +164,7 @@ const MARGIN_LOG_SCROLL_TOP := 76 # 調查紀錄捲動容器的頂部邊距，�
 const MARGIN_SAVE_LOAD_SLOT_TEXT := Vector4(8, 0, 8, 8)
 const MARGIN_LOG_ENTRY := Vector4(22, 12, 20, 12)
 const MARGIN_OBJECTIVE := Vector4(20, 11, 18, 11)
-const MARGIN_DIALOGUE := Vector4(92, 48, 78, 34)
+const MARGIN_DIALOGUE := Vector4(210, 48, 78, 34)
 
 const GAP_MENU := 14
 const GAP_MENU_LABEL := 0
@@ -263,8 +263,6 @@ var settings_tab_audio: VBoxContainer
 var settings_tab_display: VBoxContainer
 var settings_tab_buttons: Array[Button] = []
 var tex_tab_bg: Texture2D
-var tex_checkbox_unchecked: Texture2D
-var tex_slider_grabber: Texture2D
 var save_load_panel: Control
 var save_load_mode := SAVE_LOAD_MODE_SAVE
 var save_load_selected_index := 0
@@ -289,15 +287,29 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	_build_background()
-	_build_host_sprite()
+	_build_background()          # 1. 最底層：背景
+	_build_character_sprite()    # 2. 其他角色 (Sophia) 在對話框後面
 	_build_objective_panel()
 	_build_top_right_menu()
-	_build_dialogue_box()
+	_build_dialogue_box()        # 3. 中層：對話框
+	_build_host_sprite()         # 4. 最上層：莉希雅 (Host)，蓋在對話框上面
 	_build_settings_popup()
 	_build_save_load_popup()
 	_build_dialogue_log_popup()
 	_build_auto_advance_timer()
+
+func _build_host_sprite() -> void:
+	var host := TextureRect.new()
+	host.name = "HostSprite_Lisia_StoryTransparentV01"
+	host.texture = load(HOST_TEMP)
+	_apply_anchors(host, ANCHOR_HOST)
+	host.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	# 用CENTERED（不裁切）：COVERED會把立繪邊緣的半透明髮絲细節硬切掉，
+	# 變成方形剪裁的違和感。錨點框已放大到跟圖片高度幾乎吻合，
+	# CENTERED在這個框內本身就幾乎貼滿上下緣，不會再留空隙。
+	host.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	host.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(host)
 
 
 func _build_background() -> void:
@@ -327,18 +339,15 @@ func _build_background() -> void:
 	add_child(dialogue_shadow)
 
 
-func _build_host_sprite() -> void:
-	var host := TextureRect.new()
-	host.name = "HostSprite_Lisia_StoryTransparentV01"
-	host.texture = load(HOST_TEMP)
-	_apply_anchors(host, ANCHOR_HOST)
-	host.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	# 用CENTERED（不裁切）：COVERED會把立繪邊緣的半透明髮絲细節硬切掉，
-	# 變成方形剪裁的違和感。錨點框已放大到跟圖片高度幾乎吻合，
-	# CENTERED在這個框內本身就幾乎貼滿上下緣，不會再留空隙。
-	host.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	host.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(host)
+func _build_character_sprite() -> void:
+	var char := TextureRect.new()
+	char.name = "SophiaSprite_StoryTransparentV01"
+	char.texture = load(SOPHIA_TEMP)
+	_apply_anchors(char, ANCHOR_CHAR)
+	char.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	char.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	char.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(char)
 
 
 func _build_top_right_menu() -> void:
@@ -506,11 +515,6 @@ func _build_settings_popup() -> void:
 	_apply_anchors(settings_panel, ANCHOR_SAVE_LOAD_POPUP)
 	add_child(settings_panel)
 
-	# 使用 Image.load_from_file 繞過 Godot 的 .import 導入限制，並在載入時執行柔和羽化去黑底
-	tex_tab_bg = _load_texture_without_import(BUTTON_TAB_BG, 0.08)
-	tex_checkbox_unchecked = _load_texture_without_import(CHECKBOX_UNCHECKED, 0.15)
-	tex_slider_grabber = _load_texture_without_import(SLIDER_GRABBER, 0.15)
-
 	# 全螢幕背景，與存讀檔彈窗共用書房背景
 	var background := TextureRect.new()
 	background.name = "Background_SettingsOffice"
@@ -559,25 +563,7 @@ func _build_settings_popup() -> void:
 	close_button.offset_bottom = 66
 	settings_panel.add_child(close_button)
 
-	# 頂部標題與分頁切換列
-	var header_row := HBoxContainer.new()
-	header_row.name = "HeaderRow"
-	header_row.add_theme_constant_override("separation", 32)
-	main_layout.add_child(header_row)
 
-	var title := Label.new()
-	title.text = "設定"
-	_apply_label_style(title, FONT_POPUP_TITLE, COLOR_TEXT_MAIN)
-	header_row.add_child(title)
-
-	# 分頁標籤容器
-	var tab_container := HBoxContainer.new()
-	tab_container.name = "TabContainer"
-	tab_container.add_theme_constant_override("separation", 12)
-	header_row.add_child(tab_container)
-
-	# 建立分頁按鈕（套用 AI 生成的分頁按鈕背景圖）
-	_build_settings_tabs(tab_container)
 
 	# 設定內容顯示區
 	var content_area := PanelContainer.new()
@@ -607,7 +593,6 @@ func _build_settings_popup() -> void:
 	content_margin.add_child(settings_tab_display)
 
 	_fill_audio_tab()
-	_fill_display_tab()
 
 	# 預設選中第一個分頁
 	_select_settings_tab(0)
@@ -655,36 +640,6 @@ func _select_settings_tab(tab_index: int) -> void:
 func _fill_audio_tab() -> void:
 	settings_tab_audio.add_child(_make_volume_row("BGM 音量", bgm_volume, _set_bgm_volume))
 	settings_tab_audio.add_child(_make_volume_row("音效音量", sfx_volume, _set_sfx_volume))
-
-
-func _fill_display_tab() -> void:
-	settings_tab_display.add_child(_make_checkbox_row("全螢幕模式", DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN, _toggle_fullscreen))
-	settings_tab_display.add_child(_make_checkbox_row("高亮可互動格子", true, _toggle_highlight_grid))
-
-
-func _make_checkbox_row(label_text: String, is_checked: bool, changed_callback: Callable) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 24)
-
-	var label := Label.new()
-	label.text = label_text
-	label.custom_minimum_size = Vector2(200, 0)
-	_apply_label_style(label, FONT_VOLUME_LABEL, COLOR_TEXT_MAIN)
-	row.add_child(label)
-
-	var cb := CheckBox.new()
-	cb.name = "CheckBox_%s" % label_text
-	cb.button_pressed = is_checked
-	cb.focus_mode = Control.FOCUS_NONE
-	
-	# 設定 checkbox 未選取狀態為生成的銀色空框圖案
-	cb.add_theme_icon_override("unchecked", tex_checkbox_unchecked)
-	# 勾選選取狀態使用 Godot 代碼動態繪製的綠色晶石發光貼圖
-	cb.add_theme_icon_override("checked", _create_checked_texture())
-	
-	cb.toggled.connect(changed_callback)
-	row.add_child(cb)
-	return row
 
 
 func _create_checked_texture() -> ImageTexture:
@@ -1258,26 +1213,6 @@ func _make_popup_layout(parent: PanelContainer, margins: Vector4, separation: in
 	margin.add_child(layout)
 	return layout
 
-
-func _make_popup_title_row(layout: VBoxContainer, title_text: String, close_callback: Callable, close_button_name: String) -> HBoxContainer:
-	var title_row := HBoxContainer.new()
-	title_row.add_theme_constant_override("separation", GAP_TITLE_ROW)
-	layout.add_child(title_row)
-
-	var title := Label.new()
-	title.text = title_text
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_apply_label_style(title, FONT_POPUP_TITLE, COLOR_TEXT_MAIN)
-	title_row.add_child(title)
-
-	var close_button := _make_small_popup_button("×")
-	close_button.name = close_button_name
-	close_button.add_theme_font_size_override("font_size", FONT_POPUP_CLOSE)
-	close_button.pressed.connect(close_callback)
-	title_row.add_child(close_button)
-	return title_row
-
-
 # 存讀檔卡片不需要標題文字（mockup的「保存調查/讀取檔案」是外部觸發鈕，
 # 不是面板內文字），只留右上角關閉鈕讓玩家可以離開面板。
 func _make_close_only_row(layout: VBoxContainer, close_callback: Callable, close_button_name: String) -> HBoxContainer:
@@ -1310,10 +1245,7 @@ func _make_volume_row(label_text: String, value: float, changed_callback: Callab
 	slider.value = value
 	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slider.value_changed.connect(changed_callback)
-	
-	# 套用 AI 生成並經過動態去黑底與羽化處理的發光晶石 Grabber 貼圖
-	slider.add_theme_icon_override("grabber", tex_slider_grabber)
-	slider.add_theme_icon_override("grabber_highlight", tex_slider_grabber)
+
 	
 	row.add_child(slider)
 	return row

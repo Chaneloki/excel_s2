@@ -2,6 +2,95 @@ extends Control
 
 # ------------------------------
 # 異動紀錄 (Change Log):
+# 2026-06-29（第六輪，"&"字串連接＋IF()巢狀公式）：
+#   補上王佩丰教學第九講剩下兩個沒做的部分：
+#   1. "&"字串連接（=countif(A2:A3,A2&"*")）：COUNTIF/COUNTIFS的條件
+#      參數原本只認得「純引號文字／裸值／裸儲存格參照」，現在改成先
+#      交給新增的_evaluate_scalar()求值——它會先看運算式裡有沒有頂層
+#      的"&"，有就把每一段(_evaluate_term())接成一個字串，"&"前後的每
+#      一段可以是引號文字、裸儲存格參照、純數字，甚至是巢狀函數呼叫。
+#      _matches_criteria()不再自己處理引號/儲存格參照判斷，改成呼叫
+#      _evaluate_scalar()取得連接後的結果，再套用原本的運算子/萬用字元
+#      判斷（所以">="&A2接出">=600"後仍會被當成比較運算子，不是字面
+#      文字）。_split_arguments()也順手抽成共用的_split_top_level()，
+#      跟切"&"用同一套「跳過引號/括號內容」掃描規則，不重複寫一份。
+#   2. IF()巢狀公式（=IF(COUNTIF(...)=0,"未體檢","已體檢")）：新增
+#      _evaluate_if()，條件參數交給新增的_evaluate_condition()/
+#      _split_condition()找出第一個頂層比較運算子，左右兩半各自送進
+#      _evaluate_scalar()求值再比較（_compare_scalar_values()，跟
+#      _matches_criteria()的萬用字元語意分開，IF的"="是精確相等，不該
+#      被"*"/"?"影響）；條件裡的COUNTIF/COUNTIFS透過_evaluate_term()
+#      的「看起來像函數呼叫就遞迴呼叫_evaluate_formula()」機制求值，
+#      不需要額外寫一套巢狀函數解析。_evaluate_formula()的dispatch
+#      新增"IF"分支。
+# 2026-06-29（第五輪，F4切換參照鎖定）：
+#   新增真實Excel的F4快捷鍵：編輯公式時（格子內或fx公式列），把游標
+#   移到某個儲存格參照上按F4，會依「相對參照(A1) -> 絕對參照($A$1) ->
+#   鎖列(A$1) -> 鎖欄($A1) -> 回到相對參照」的順序循環切換那段參照的
+#   $鎖定狀態，對應拖曳填滿時「沒$的列號才會跟著遞增」的規則（見上面
+#   _shift_relative_reference()），玩家不用自己手動打$字元。共用
+#   _cycle_reference_lock_at_caret()，格子內編輯（_on_cell_gui_input）
+#   跟fx公式列（新增的_on_formula_bar_gui_input）各自監聽InputEventKey
+#   KEY_F4後呼叫同一套邏輯。
+# 2026-06-29（第四輪，修正溢出文字點不到的問題）：
+#   玩家回報：編輯中如果內容溢出蓋住右邊格子，想點擊溢出的文字部分
+#   （例如想把游標移到後面修改），卻被當成「點了別的格子」直接結束
+#   編輯。根因是z_index只影響畫面畫在誰上面，不影響滑鼠點擊判定——
+#   Godot判斷點擊命中哪個Control是依節點樹順序，跟z_index無關，所以
+#   點下去時，視覺上被蓋住、但節點樹判定順序在前的右邊鎖住格子還是
+#   搶走了點擊。新增_update_overflow_mouse_passthrough()：依目前溢出
+#   的實際像素寬度，算出被蓋住的右邊格子有哪些，暫時把它們的
+#   mouse_filter設成IGNORE（點擊視為沒點到、繼續往後找），讓點擊正確
+#   落到真正在編輯的LineEdit上；離開編輯狀態時用
+#   _restore_overflow_mouse_passthrough()還原，溢出範圍以外的格子完全
+#   不受影響，正常點擊一樣會結束編輯、換到那一格。
+# 2026-06-29（第三輪，編輯中內容溢出顯示）：
+#   新增「正在編輯的格子，內容超出欄寬就往右溢出蓋住右邊格子，直到離開
+#   編輯狀態才收回」的行為，對齊真實Excel習慣。做法：LineEdit平時用
+#   FULL_RECT貼合wrapper（也就是這格的欄寬，跟GridContainer版面一致），
+#   只有在focus_entered時換成手動定位（TOP_LEFT）並依文字實際寬度放大
+#   LineEdit的size（_refresh_editable_cell_overflow_width()，文字變動
+#   時即時重算），wrapper本身大小完全不變、表格版面不會被打字內容影響；
+#   wrapper的z_index在編輯時抬高（EDIT_OVERFLOW_Z_INDEX），確保溢出的
+#   部分畫在右邊鄰居格子之上。focus_exited時兩者都還原。
+# 2026-06-29（第二輪，真實Excel編輯/填滿行為修正）：
+#   1. 修正「點格子應該看到公式本身、不是看到結果」的bug：_on_editable_
+#      cell_text_submitted()原本先把格子文字換成計算結果，再呼叫
+#      release_focus()，但release_focus()會同步觸發focus_exited、又呼叫
+#      一次_commit_cell()，這次傳進去的是「已經被換成結果」的文字，把
+#      row_formulas覆蓋成結果字串，公式就此遺失。改成只呼叫
+#      release_focus()，讓focus_exited統一負責commit一次，格子文字在
+#      commit前都還是玩家打的公式原文，不會被提早換掉。
+#   2. 拖曳填滿的相對參照改成通用化：v1~v12-1的_shift_relative_reference
+#      只認得「COL_PERSON（A欄）整段公式字串取代」，公式通用化之後條件
+#      可能參照任何欄，而且盲目對整段公式做字串取代，若範圍邊界數字剛好
+#      等於來源列號（例如G2:G9的"2"），會連範圍邊界都被誤改。改成先用
+#      _parse_function_call()拆出函數名稱跟引數，只處理「條件」那個引數
+#      位置（COUNTIF第2個／COUNTIFS奇數位），且只在該引數本身就是裸
+#      儲存格參照、列號等於來源列時才shift，其餘（文字/運算子/數字條件、
+#      範圍引數）原樣不動，對齊真實Excel「範圍不動、相對參照才跟著列數
+#      移動」的行為。
+#   3. 上一版的修正其實還是錯的：誤以為「範圍永遠不該被shift，只有條件
+#      參照才該shift」，但真實Excel的規則是「有沒有$」，不是「在哪個
+#      參數位置」——沒加$的範圍邊界（例如G2:G9）往下拖一樣會移動，玩家
+#      想固定範圍要自己打$鎖定（$G$2:$G$9）。改成_shift_relative_
+#      reference()逐字元掃描整段公式文字（跳過引號內容），對每個比對到
+#      的「($?)欄字母($?)列號」套用「沒$就遞增、有$就不動」規則，範圍
+#      跟條件用同一套邏輯，不再特別區分。連帶_flatten_range()／
+#      _matches_criteria()都要先去掉$才能正確查到儲存格（範圍/條件本身
+#      解析時$只是視覺上的鎖定標記，不影響要找哪一格）。
+# 公式引擎通用化（v12）：v1~v11的COUNTIF只認得一種寫死的正規表示式
+#   （單欄範圍+條件只能完全相等），出題者寫死什麼答案玩家就只能打那種
+#   公式，不是「真的會算」。改成跟真實Excel一樣的通用邏輯：
+#   _parse_function_call()/_split_arguments()先把"=函數(引數1,引數2,...)"
+#   拆成函數名稱跟引數陣列（正確處理引號/括號內的逗號），_evaluate_formula()
+#   依函數名稱分派；_flatten_range()把任意矩形範圍（含"E:E"整欄寫法）
+#   展開成cell_id清單；_matches_criteria()支援比較運算子(<> >= <= > <)、
+#   萬用字元(* ?)、儲存格參照、純數字/純文字條件，對齊王佩丰Excel基礎
+#   24講第九講教學內容（=countif(B2:G2,">=60")、=COUNTIF(G:G,A5)找重複值、
+#   =countifs(E:E,J5,D:D,I5)）。COUNTIF/COUNTIFS本身只是「逐格套用條件、
+#   數有幾格符合」，不管表格資料怎麼變動都能算出正確答案，不綁定特定
+#   案件的特定答案。新增COUNTIFS支援（多組範圍/條件，範圍大小須一致）。
 # 2026-06-28:
 #   1. 架構重做（v2~v4）：v1只驗證COUNTIF字串解析，跟案件1實際玩法骨架
 #      對不上。v2補上「整欄填滿＋跨表查找＋相對參照」三個邏輯骨架。v3
@@ -105,6 +194,8 @@ const SIDEBAR_TAB_LABELS := ["證言", "物證", "名冊", "交易紀錄"]
 # 訊息見_evaluate_countif()。
 const FORMULA_HINTS := [
 	{"name": "COUNTIF", "desc": "計算符合條件的儲存格數量", "available": true},
+	{"name": "COUNTIFS", "desc": "計算同時符合多個條件的儲存格數量", "available": true},
+	{"name": "IF", "desc": "依條件成立與否回傳不同結果", "available": true},
 	{"name": "SUMIFS", "desc": "依多重條件加總數值", "available": false},
 	{"name": "XLOOKUP", "desc": "在範圍或陣列中查找對應值", "available": false},
 	{"name": "LEFT", "desc": "擷取字串左側指定字元數", "available": false},
@@ -166,6 +257,13 @@ const OBJECTIVE_STATUS_ICONS := {
 # 1.2倍（36->44），文字跟著放大才不會在變大的格子裡顯得鬆散。
 const GRID_ROW_HEIGHT := 44
 const FILL_HANDLE_SIZE = Vector2(10, 10)
+# 編輯中的格子如果輸入內容比欄寬還長，要像真實Excel一樣往右溢出蓋住
+# 右邊格子（直到離開編輯狀態才收回），不是讓欄寬跟著被打的字變寬（那樣
+# 整張表格版面會被一格的輸入內容打亂）。EDIT_OVERFLOW_Z_INDEX讓編輯中
+# 的格子畫在右邊鄰居格子之上；EDIT_OVERFLOW_EXTRA_PADDING是文字寬度
+# 之外多留的緩衝，避免游標貼著文字最後一個字。
+const EDIT_OVERFLOW_Z_INDEX := 50
+const EDIT_OVERFLOW_EXTRA_PADDING := 24.0
 # 補滿欄/補滿列：表格右邊、下面如果還有可視空間沒被A~J真實資料欄/列
 # 填滿，就用這個預設寬度自動算出要再補幾欄純空白格子，對齊真實Excel
 # 「資料範圍以外還是會繼續顯示空白格線」的行為，不是手動猜一個倍率
@@ -366,6 +464,8 @@ func _make_texture_style(tex: Texture2D, margin: float = 0.0, margin_horizontal:
 var cell_value_lookup: Dictionary = {}          # "A2" -> "T1"，鎖住格子的實際值
 var editable_cells: Dictionary = {}             # "G2" -> LineEdit節點
 var fill_handle_nodes: Dictionary = {}          # "G2" -> 拖拉填滿手把節點
+var editable_cell_wrappers: Dictionary = {}     # "G2" -> 該格的wrapper Control，編輯時用來調整z_index
+var editable_cell_base_width: Dictionary = {}   # "G2" -> 該格原始欄寬，離開編輯狀態時要收回這個寬度
 var status_cell_by_row: Dictionary = {}         # row(int) -> COL_STATUS那一格的LineEdit節點
 var row_formulas: Dictionary = {}               # "G2" -> 玩家打的公式原文
 var all_cell_nodes: Dictionary = {}             # 所有格子（鎖住+可編輯）："A2" -> LineEdit節點
@@ -405,6 +505,9 @@ func _ready() -> void:
 	cell_value_lookup.clear()
 	editable_cells.clear()
 	fill_handle_nodes.clear()
+	editable_cell_wrappers.clear()
+	editable_cell_base_width.clear()
+	overflow_ignored_cell_ids.clear()
 	status_cell_by_row.clear()
 	row_formulas.clear()
 	all_cell_nodes.clear()
@@ -443,7 +546,7 @@ func _ready() -> void:
 
 	result_label = Label.new()
 	result_label.name = "ResultLabel"
-	result_label.text = "目前請使用 COUNTIF 檢查證言狀態。"
+	result_label.text = "目前請使用 COUNTIF／COUNTIFS／IF 檢查證言狀態。"
 	_apply_label_style(result_label, RESULT_FONT_SIZE, COLOR_TEXT_MAIN)
 	bottom_hbox.add_child(result_label)
 
@@ -722,6 +825,7 @@ func _build_center_area() -> Control:
 	formula_input.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	formula_input.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	formula_input.text_submitted.connect(_on_formula_bar_submitted)
+	formula_input.gui_input.connect(_on_formula_bar_gui_input)
 	formula_box.add_child(formula_input)
 
 	var scroll = ScrollContainer.new()
@@ -879,8 +983,9 @@ func _build_right_sidebar() -> PanelContainer:
 
 	var hints = [
 		{"f": "COUNTIF", "d": "計算符合條件的儲存格數量"},
+		{"f": "COUNTIFS", "d": "計算同時符合多個條件的儲存格數量"},
+		{"f": "IF", "d": "依條件成立與否回傳不同結果"},
 		{"f": "SUMIFS", "d": "依多重條件加總數值"},
-		{"f": "XLOOKUP", "d": "在範圍或陣列中查找對應值"}
 	]
 
 	for h in hints:
@@ -1132,6 +1237,7 @@ func _make_editable_cell_with_handle(cell_id: String, row: int, width_px: float)
 	input.focus_entered.connect(_on_editable_cell_focus_entered.bind(cell_id))
 	input.focus_exited.connect(_on_editable_cell_focus_exited.bind(cell_id))
 	input.text_submitted.connect(_on_editable_cell_text_submitted.bind(cell_id))
+	input.text_changed.connect(_on_editable_cell_text_changed.bind(cell_id))
 	input.gui_input.connect(_on_cell_gui_input.bind(cell_id))
 	wrapper.add_child(input)
 
@@ -1159,6 +1265,8 @@ func _make_editable_cell_with_handle(cell_id: String, row: int, width_px: float)
 	row_formulas[cell_id] = ""
 	all_cell_nodes[cell_id] = input
 	cell_base_bg[cell_id] = COLOR_EDITABLE_BG
+	editable_cell_wrappers[cell_id] = wrapper
+	editable_cell_base_width[cell_id] = width_px
 
 	return wrapper
 
@@ -1182,13 +1290,118 @@ func _on_editable_cell_focus_entered(cell_id: String) -> void:
 	for id in fill_handle_nodes:
 		fill_handle_nodes[id].visible = (id == cell_id)
 
+	# 進入編輯狀態：對齊真實Excel「正在輸入的格子，內容超出欄寬就往右
+	# 溢出蓋住右邊格子，直到離開編輯狀態才收回」的行為。LineEdit改用
+	# 手動定位（TOP_LEFT）取代撐滿wrapper的FULL_RECT，這樣它的size才能
+	# 大於wrapper本身；wrapper（GridContainer真正看到的格子、決定欄寬）
+	# 完全不變，所以表格版面不會被打字內容影響，只有畫面上這一格的
+	# LineEdit會視覺溢出。z_index抬高確保溢出部分畫在右邊鄰居格子之上。
+	var input: LineEdit = editable_cells[cell_id]
+	input.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	input.position = Vector2.ZERO
+	if editable_cell_wrappers.has(cell_id):
+		editable_cell_wrappers[cell_id].z_index = EDIT_OVERFLOW_Z_INDEX
+	_refresh_editable_cell_overflow_width(cell_id)
+
 
 func _on_editable_cell_focus_exited(cell_id: String) -> void:
 	_commit_cell(cell_id, editable_cells[cell_id].text)
 
+	# 離開編輯狀態：換回FULL_RECT讓LineEdit乖乖貼合wrapper（也就是這格
+	# 原本的欄寬），z_index歸零，溢出範圍跟著消失，回到正常格線顯示。
+	var input: LineEdit = editable_cells[cell_id]
+	input.set_anchors_preset(Control.PRESET_FULL_RECT)
+	if editable_cell_wrappers.has(cell_id):
+		editable_cell_wrappers[cell_id].z_index = 0
 
-func _on_editable_cell_text_submitted(text: String, cell_id: String) -> void:
-	_commit_cell(cell_id, text)
+	# 離開編輯狀態時，前面為了讓滑鼠「點得到溢出文字」而暫時設成忽略
+	# 滑鼠的右邊格子也要還原，不然那些格子之後永遠點不到。
+	_restore_overflow_mouse_passthrough()
+
+
+# 編輯中每次文字變動都重新量一次寬度，模擬真實Excel「邊打邊往右長」的
+# 視覺效果，不用等放開焦點才更新。
+func _on_editable_cell_text_changed(_new_text: String, cell_id: String) -> void:
+	if editable_cells.has(cell_id) and editable_cells[cell_id].has_focus():
+		_refresh_editable_cell_overflow_width(cell_id)
+
+
+# 量測目前文字的實際顯示寬度，跟這格原始欄寬比較，取較大值＋緩衝當作
+# LineEdit這次要顯示的寬度——文字沒超出欄寬就維持原寬度，超出才溢出。
+func _refresh_editable_cell_overflow_width(cell_id: String) -> void:
+	if not editable_cells.has(cell_id):
+		return
+	var input: LineEdit = editable_cells[cell_id]
+	var base_width: float = editable_cell_base_width.get(cell_id, GRID_ROW_HEIGHT)
+
+	var font = input.get_theme_font("font")
+	var font_size = input.get_theme_font_size("font_size")
+	var text_width := 0.0
+	if font:
+		text_width = font.get_string_size(input.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+
+	var desired_width = max(base_width, text_width + EDIT_OVERFLOW_EXTRA_PADDING)
+	input.size = Vector2(desired_width, GRID_ROW_HEIGHT)
+
+	var overflow_px = max(0.0, desired_width - base_width)
+	_update_overflow_mouse_passthrough(cell_id, overflow_px)
+
+
+# z_index只會影響「畫面上畫在誰上面」，不會影響「滑鼠點擊算點到誰」——
+# Godot判斷滑鼠點擊命中哪個Control是依照節點樹的順序，跟z_index無關。
+# 這就是玩家回報的bug根因：溢出的文字雖然視覺上蓋住了右邊格子，但點
+# 下去時，右邊那個鎖住格子（在節點樹裡比目前編輯格更晚加入、判定上
+# 排在前面）還是搶走了點擊，被當成「點別的格子」而觸發focus_exited，
+# 等於是誤判成「編輯完成」。
+#
+# 解法：把目前被溢出文字蓋住的右邊鎖住格子，暫時設成mouse_filter=IGNORE
+# ——這個設定的意思是「點下去當作沒點到我，繼續往後找」，於是滑鼠事件
+# 會略過這些格子，改成命中底下（節點樹中較早加入、判定順序較後面才檢查
+# 到，但視覺位置剛好被溢出文字蓋住）真正在編輯的LineEdit，游標可以正常
+# 點到溢出文字的任何位置，不會被誤判成換格。只處理「目前被溢出範圍
+# 實際覆蓋到」的格子，溢出範圍以外的格子維持原樣可以正常點擊選取
+# （點那些格子代表玩家真的要換到別的格子，應該照常觸發離開編輯）。
+var overflow_ignored_cell_ids: Array = []
+
+func _update_overflow_mouse_passthrough(cell_id: String, overflow_px: float) -> void:
+	_restore_overflow_mouse_passthrough()
+	if overflow_px <= 0.0:
+		return
+
+	var col := _extract_column_letter(cell_id)
+	var row := int(cell_id.substr(col.length()))
+	var start_index = current_column_order.find(col)
+	if start_index == -1:
+		return
+
+	var accumulated := 0.0
+	var ci = start_index + 1
+	while ci < current_column_order.size() and accumulated < overflow_px:
+		var next_col = current_column_order[ci]
+		var next_cell_id = next_col + str(row)
+		if all_cell_nodes.has(next_cell_id):
+			all_cell_nodes[next_cell_id].mouse_filter = Control.MOUSE_FILTER_IGNORE
+			overflow_ignored_cell_ids.append(next_cell_id)
+		accumulated += current_column_widths.get(next_col, DEFAULT_FILLER_COLUMN_WIDTH)
+		ci += 1
+
+
+func _restore_overflow_mouse_passthrough() -> void:
+	for id in overflow_ignored_cell_ids:
+		if all_cell_nodes.has(id):
+			all_cell_nodes[id].mouse_filter = Control.MOUSE_FILTER_STOP
+	overflow_ignored_cell_ids.clear()
+
+
+# 修正過的bug：原本這裡先呼叫_commit_cell()把格子文字換成計算結果，
+# 再呼叫release_focus()——但release_focus()會同步觸發focus_exited，
+# 後者又呼叫一次_commit_cell()，這次傳進去的卻是「已經被換成結果」的
+# 文字，導致row_formulas被結果字串覆蓋掉，公式就此遺失（重新點開格子
+# 只會看到結果，不會看到原本打的公式，跟真實Excel「點格子永遠看到
+# 公式本身」的行為不符）。改成只呼叫release_focus()，讓focus_exited
+# 統一負責commit，此時格子文字還是玩家剛打完的公式原文，不會被提早
+# 換掉，只會commit一次。
+func _on_editable_cell_text_submitted(_text: String, cell_id: String) -> void:
 	editable_cells[cell_id].release_focus()
 
 
@@ -1198,8 +1411,7 @@ func _commit_cell(cell_id: String, text: String) -> void:
 	if trimmed == "":
 		editable_cells[cell_id].text = ""
 		return
-	var row = int(cell_id.substr(1))
-	var evaluation = _evaluate_countif(trimmed, row)
+	var evaluation = _evaluate_formula(trimmed)
 	_show_message(evaluation["message"])
 	if evaluation["ok"]:
 		editable_cells[cell_id].text = str(evaluation["value"])
@@ -1246,6 +1458,13 @@ func _on_row_header_gui_input(event: InputEvent, row: int) -> void:
 # 補滿欄（K、L……）才能跟A~J一樣正常開始拖曳選取，不會因為找不到欄位
 # 索引而直接return、整個選取失效。
 func _on_cell_gui_input(event: InputEvent, cell_id: String) -> void:
+	# 對齊真實Excel：編輯中的格子按F4，把游標所在的儲存格參照在「相對／
+	# 絕對／兩種混合鎖定」之間循環切換。鎖住的展示格不能編輯，不適用。
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F4 and editable_cells.has(cell_id):
+		_cycle_reference_lock_at_caret(editable_cells[cell_id])
+		accept_event()
+		return
+
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		var col := _extract_column_letter(cell_id)
 		var row := int(cell_id.substr(col.length()))
@@ -1258,6 +1477,49 @@ func _on_cell_gui_input(event: InputEvent, cell_id: String) -> void:
 		selection_current_col_index = col_index
 		selection_current_row = row
 		_refresh_rect_selection()
+
+
+# fx公式列跟格子內編輯共用同一套F4循環邏輯。
+func _on_formula_bar_gui_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F4:
+		# FormulaInput巢狀在好幾層容器底下，get_node()不會自動往下深層
+		# 找，要用find_child()做遞迴搜尋。
+		var formula_bar := find_child("FormulaInput", true, false) as LineEdit
+		if formula_bar == null:
+			return
+		_cycle_reference_lock_at_caret(formula_bar)
+		accept_event()
+
+
+# 真實Excel的F4循環順序：相對參照(A1) -> 絕對參照($A$1) -> 鎖列(A$1)
+# -> 鎖欄($A1) -> 回到相對參照(A1)，每按一次F4換下一種。
+const REFERENCE_LOCK_CYCLE := [["", ""], ["$", "$"], ["", "$"], ["$", ""]]
+
+# 找出游標目前所在（或剛好貼著）的儲存格參照，把它的$鎖定狀態換成
+# 循環順序裡的下一種，取代掉那一段文字，並把游標移到替換後的文字
+# 後面，呼應真實Excel按F4時游標停留位置的習慣。
+func _cycle_reference_lock_at_caret(line_edit: LineEdit) -> void:
+	var text = line_edit.text
+	var caret_pos = line_edit.caret_column
+
+	var ref_regex = RegEx.new()
+	ref_regex.compile("(\\$?)([A-Za-z]+)(\\$?)(\\d+)")
+	for m in ref_regex.search_all(text):
+		var start = m.get_start()
+		var end = m.get_end()
+		if caret_pos < start or caret_pos > end:
+			continue
+
+		var current_state = [m.get_string(1), m.get_string(3)]
+		var state_index = REFERENCE_LOCK_CYCLE.find(current_state)
+		if state_index == -1:
+			state_index = 0
+		var next_state = REFERENCE_LOCK_CYCLE[(state_index + 1) % REFERENCE_LOCK_CYCLE.size()]
+
+		var replacement = "%s%s%s%s" % [next_state[0], m.get_string(2), next_state[1], m.get_string(4)]
+		line_edit.text = text.substr(0, start) + replacement + text.substr(end)
+		line_edit.caret_column = start + replacement.length()
+		return
 
 
 # cell_id格式是「欄字母+列號」（例如"G9"、"K10"，補滿欄超過Z後可能是
@@ -1427,57 +1689,191 @@ func _apply_fill_range(source_row: int, target_row: int) -> void:
 		var target_cell_id = COL_STATUS + str(row)
 		if not editable_cells.has(target_cell_id):
 			continue
-		var shifted_formula = _shift_relative_reference(source_formula, COL_PERSON, source_row, row)
+		var shifted_formula = _shift_relative_reference(source_formula, source_row, row)
 		_commit_cell(target_cell_id, shifted_formula)
 
-	_show_message("已將 %s 的公式拖曳填滿到第%d~%d列（範圍不變，姓名參照列號自動遞增）。" % [source_cell_id, source_row + 1, target_row])
+	_show_message("已將 %s 的公式拖曳填滿到第%d~%d列（沒有用$鎖定列號的儲存格參照會依列數自動遞增，加了$的維持不動）。" % [source_cell_id, source_row + 1, target_row])
 
 
-func _shift_relative_reference(formula: String, col: String, from_row: int, to_row: int) -> String:
-	var regex = RegEx.new()
-	regex.compile("\\b%s%d\\b" % [col, from_row])
-	return regex.sub(formula, "%s%d" % [col, to_row], true)
+# 對齊真實Excel往下拖曳填滿的相對參照規則：公式裡任何一個「欄字母+列號」
+# 參照，只要列號前面沒有$，列號就跟著目前列數遞增；列號前面有$（例如
+# $G$2、G$2）的就鎖住不動。這個規則對整段公式文字一視同仁，不分「在
+# 範圍裡」還是「在條件裡」——範圍邊界(G2:G9)跟條件參照(A2)用的是同一套
+# 判斷，這也是為什麼玩家想要範圍不要跟著移動時，必須自己打$鎖定，不是
+# 程式自動幫忙猜「範圍就不該動」（之前版本誤以為範圍永遠不該shift，
+# 是錯的，真實Excel裡沒加$的範圍邊界往下拖一樣會移動）。
+#
+# 逐字元掃描公式字串，跳過引號內的內容（文字條件裡剛好出現的"A2"這種
+# 字串不是儲存格參照，不該被shift），引號外的部分嘗試從目前位置比對
+# 「($?)(欄字母)($?)(列號)」，比對到才計算新列號、跳過比對到的長度，
+# 比對不到就照抄一個字元往後移動。
+func _shift_relative_reference(formula: String, from_row: int, to_row: int) -> String:
+	var delta = to_row - from_row
+	var ref_regex = RegEx.new()
+	ref_regex.compile("(\\$?)([A-Za-z]+)(\\$?)(\\d+)")
+
+	var result := ""
+	var i := 0
+	var length := formula.length()
+	var in_quotes := false
+	while i < length:
+		var ch = formula[i]
+		if ch == "\"":
+			in_quotes = not in_quotes
+			result += ch
+			i += 1
+			continue
+		if in_quotes:
+			result += ch
+			i += 1
+			continue
+
+		var m = ref_regex.search(formula, i)
+		if m != null and m.get_start() == i:
+			var col_dollar = m.get_string(1)
+			var col_letters = m.get_string(2)
+			var row_dollar = m.get_string(3)
+			var row_num = int(m.get_string(4))
+			var new_row = row_num if row_dollar != "" else row_num + delta
+			result += "%s%s%s%d" % [col_dollar, col_letters, row_dollar, new_row]
+			i = m.get_end()
+		else:
+			result += ch
+			i += 1
+
+	return result
 
 
 # ------------------------------------------------------------
 # 5. 公式運算核心
+#
+# 跟v1的最大差異：v1的_evaluate_countif/_parse_countif只認得「單一固定
+# 寫法」（單欄範圍+單一條件，條件只能是完全相等），出題者寫死什麼答案
+# 玩家就只能打那一種公式。這一版改成跟真實Excel一樣的通用邏輯：範圍
+# 可以是任意矩形（_flatten_range），條件支援比較運算子／萬用字元／
+# 儲存格參照／純數字／純文字（_matches_criteria），COUNTIF/COUNTIFS
+# 本身只是「在範圍裡逐格套用條件、數有幾格符合」，資料長什麼樣、玩家
+# 想查哪一欄都能算出正確答案，不綁定特定問題的特定答案。
 # ------------------------------------------------------------
-func _evaluate_countif(raw_text: String, current_row: int) -> Dictionary:
+
+# 找不到、找不到函數對應的回應一律用偵探系統語氣（嚴格規則11），不顯示
+# 技術性錯誤訊息。
+const MSG_UNSUPPORTED_FORMULA := "目前案件用不到這個指令，先專心查 COUNTIF／COUNTIFS／IF 試試看。"
+
+# 依函數名稱分派到對應的運算函式，是新增公式（SUMIF/VLOOKUP……）時唯一
+# 要擴充的地方——對應readme「沿用COUNTIF的_parse_xxx/_evaluate_xxx模式
+# 逐個擴充」的開發原則。
+func _evaluate_formula(raw_text: String) -> Dictionary:
 	var text = _normalize_formula(raw_text)
-
-	var parsed = _parse_countif(text)
+	var parsed = _parse_function_call(text)
 	if parsed == null:
-		return {"ok": false, "value": null, "message": "目前案件用不到這個指令，先專心查 COUNTIF 試試看。"}
+		return {"ok": false, "value": null, "message": MSG_UNSUPPORTED_FORMULA}
 
-	var range_col = parsed["range_col_start"]
-	var range_row_start = parsed["range_row_start"]
-	var range_row_end = parsed["range_row_end"]
-	var criteria_raw = parsed["criteria_raw"]
+	match parsed["name"]:
+		"COUNTIF":
+			return _evaluate_countif(parsed["args"])
+		"COUNTIFS":
+			return _evaluate_countifs(parsed["args"])
+		"IF":
+			return _evaluate_if(parsed["args"])
+		_:
+			return {"ok": false, "value": null, "message": MSG_UNSUPPORTED_FORMULA}
 
-	var range_values: Array = []
-	for r in range(range_row_start, range_row_end + 1):
-		var cell_id = range_col + str(r)
-		if cell_value_lookup.has(cell_id):
-			range_values.append(cell_value_lookup[cell_id])
 
-	if range_values.is_empty():
-		return {"ok": false, "value": null, "message": "找不到範圍 %s%d:%s%d 的資料。" % [range_col, range_row_start, range_col, range_row_end]}
+# =COUNTIF(範圍,條件)：範圍裡有幾格符合條件。
+func _evaluate_countif(args: Array) -> Dictionary:
+	if args.size() != 2:
+		return {"ok": false, "value": null, "message": "COUNTIF 需要剛好兩個參數：範圍與條件，例如 =COUNTIF(G2:G9,\"已體檢\")。"}
 
-	var criteria_value: String
-	if criteria_raw.begins_with("\"") and criteria_raw.ends_with("\""):
-		criteria_value = criteria_raw.substr(1, criteria_raw.length() - 2)
-	else:
-		if not cell_value_lookup.has(criteria_raw):
-			return {"ok": false, "value": null, "message": "找不到參照格 %s 的值，請確認儲存格座標。" % criteria_raw}
-		criteria_value = cell_value_lookup[criteria_raw]
+	var range_text = args[0]
+	var criteria_text = args[1]
+	var range_ids = _flatten_range(range_text)
+	if range_ids.is_empty():
+		return {"ok": false, "value": null, "message": "找不到範圍 %s 的資料，請確認儲存格座標。" % range_text}
 
 	var count = 0
-	for value in range_values:
-		if value == criteria_value:
+	for cell_id in range_ids:
+		if _matches_criteria(cell_value_lookup.get(cell_id, ""), criteria_text):
 			count += 1
 
-	var message = "=COUNTIF(%s%d:%s%d,%s) 結果 = %d（條件值：%s）" % [range_col, range_row_start, range_col, range_row_end, criteria_raw, count, criteria_value]
+	var message = "=COUNTIF(%s,%s) 結果 = %d" % [range_text, criteria_text, count]
 	return {"ok": true, "value": count, "message": message}
+
+
+# =COUNTIFS(範圍1,條件1,範圍2,條件2,……)：每組範圍/條件成對出現，所有
+# 範圍大小必須一致（真實Excel的規則），逐個index檢查是否同時符合每一
+# 組條件，全部符合才計入。
+func _evaluate_countifs(args: Array) -> Dictionary:
+	if args.size() < 2 or args.size() % 2 != 0:
+		return {"ok": false, "value": null, "message": "COUNTIFS 需要成對的範圍與條件，例如 =COUNTIFS(E:E,J5,D:D,I5)。"}
+
+	var pair_count = args.size() / 2
+	var range_lists: Array = []
+	var criteria_list: Array = []
+	var expected_size := -1
+
+	for i in range(pair_count):
+		var range_text = args[i * 2]
+		var range_ids = _flatten_range(range_text)
+		if range_ids.is_empty():
+			return {"ok": false, "value": null, "message": "找不到範圍 %s 的資料，請確認儲存格座標。" % range_text}
+		if expected_size == -1:
+			expected_size = range_ids.size()
+		elif range_ids.size() != expected_size:
+			return {"ok": false, "value": null, "message": "COUNTIFS 的每一組範圍大小必須一致，請檢查 %s。" % range_text}
+		range_lists.append(range_ids)
+		criteria_list.append(args[i * 2 + 1])
+
+	var count = 0
+	for index in range(expected_size):
+		var all_match := true
+		for p in range(pair_count):
+			var cell_id = range_lists[p][index]
+			if not _matches_criteria(cell_value_lookup.get(cell_id, ""), criteria_list[p]):
+				all_match = false
+				break
+		if all_match:
+			count += 1
+
+	var args_display := ""
+	for i in range(args.size()):
+		if i > 0:
+			args_display += ","
+		args_display += args[i]
+	var message = "=COUNTIFS(%s) 結果 = %d" % [args_display, count]
+	return {"ok": true, "value": count, "message": message}
+
+
+# =IF(條件,條件成立時的結果,條件不成立時的結果)：對齊王佩丰教學
+# =IF(COUNTIF(...)=0,"未體檢","已體檢")的巢狀用法——條件本身可以是
+# 「COUNTIF(...)=0」這種比較式，COUNTIF/COUNTIFS可以被當成條件裡的
+# 子運算式，靠_evaluate_condition()／_evaluate_scalar()共用同一套
+# 運算式解析（見下方說明）。第三個參數可省略，省略且條件不成立時
+# 對齊Excel回傳FALSE。
+func _evaluate_if(args: Array) -> Dictionary:
+	if args.size() != 2 and args.size() != 3:
+		return {"ok": false, "value": null, "message": "IF 需要2或3個參數：條件、條件成立時的結果、(可省略)條件不成立時的結果。"}
+
+	var condition_eval = _evaluate_condition(args[0])
+	if not condition_eval["ok"]:
+		return condition_eval
+
+	var args_display := ""
+	for i in range(args.size()):
+		if i > 0:
+			args_display += ","
+		args_display += args[i]
+
+	var branch_index = 1 if condition_eval["value"] else 2
+	if branch_index >= args.size():
+		return {"ok": true, "value": "FALSE", "message": "=IF(%s) 結果 = FALSE（條件不成立，且未提供第三個參數）" % args_display}
+
+	var branch_eval = _evaluate_scalar(args[branch_index])
+	if not branch_eval["ok"]:
+		return branch_eval
+
+	var message = "=IF(%s) 結果 = %s" % [args_display, str(branch_eval["value"])]
+	return {"ok": true, "value": branch_eval["value"], "message": message}
 
 
 # ------------------------------------------------------------
@@ -1498,15 +1894,347 @@ func _normalize_formula(text: String) -> String:
 	return result
 
 
-func _parse_countif(text: String):
-	var regex = RegEx.new()
-	regex.compile("^=COUNTIF\\(([A-Za-z]+)(\\d+):[A-Za-z]+(\\d+),\\s*(\"[^\"]*\"|[A-Za-z]+\\d+)\\)$")
-	var m = regex.search(text.strip_edges())
-	if m == null:
+# 把 "=函數名稱(引數1,引數2,...)" 拆成函數名稱跟引數陣列，取代v1只認得
+# 一種COUNTIF寫法的正規表示式。引數用_split_arguments()切，正確處理
+# 引號內的逗號（條件文字本身可能含逗號）。
+func _parse_function_call(text: String):
+	var stripped = text.strip_edges()
+	if not stripped.begins_with("="):
 		return null
-	return {
-		"range_col_start": m.get_string(1).to_upper(),
-		"range_row_start": int(m.get_string(2)),
-		"range_row_end": int(m.get_string(3)),
-		"criteria_raw": m.get_string(4)
-	}
+	var body = stripped.substr(1)
+	var paren_index = body.find("(")
+	if paren_index == -1 or not body.ends_with(")"):
+		return null
+
+	var func_name = body.substr(0, paren_index).strip_edges()
+	var args_str = body.substr(paren_index + 1, body.length() - paren_index - 2)
+	return {"name": func_name, "args": _split_arguments(args_str)}
+
+
+# 依逗號切割引數字串，但忽略引號內、括號內（例如巢狀函數）的逗號。
+# 實際邏輯交給通用的_split_top_level()，跟_evaluate_scalar()切割"&"
+# 字串連接運算式共用同一套「跳過引號/括號內容」的掃描規則。
+func _split_arguments(args_str: String) -> Array:
+	if args_str.strip_edges() == "":
+		return []
+	return _split_top_level(args_str, ",")
+
+
+# 依指定的單一分隔字元切割字串，但忽略引號內、括號內（巢狀函數呼叫）的
+# 分隔字元——COUNTIF/COUNTIFS的引數用","分隔、字串連接運算式用"&"
+# 分隔，掃描規則完全一樣，所以抽成這個共用函式，不要各自重複寫一份。
+func _split_top_level(text: String, delimiter: String) -> Array:
+	var parts: Array = []
+	var current := ""
+	var in_quotes := false
+	var paren_depth := 0
+	for ch in text:
+		if ch == "\"":
+			in_quotes = not in_quotes
+			current += ch
+		elif in_quotes:
+			current += ch
+		elif ch == "(":
+			paren_depth += 1
+			current += ch
+		elif ch == ")":
+			paren_depth -= 1
+			current += ch
+		elif ch == delimiter and paren_depth == 0:
+			parts.append(current.strip_edges())
+			current = ""
+		else:
+			current += ch
+	parts.append(current.strip_edges())
+	return parts
+
+
+# ---- 運算式求值（支援"&"字串連接、巢狀函數呼叫，COUNTIF/COUNTIFS的
+# 條件參數跟IF()的三個參數都共用這套邏輯）----
+#
+# 對齊王佩丰教學=countif(A2:A3,A2&"*")的字串連接寫法：條件參數本身可以
+# 是一段運算式，不是只能是純引號文字/裸值/裸儲存格參照。_evaluate_scalar()
+# 先看運算式裡有沒有頂層的"&"，有就把每一段(_evaluate_term())的結果接成
+# 一個字串；沒有就直接當成單一項目求值。
+
+# 把一段運算式（單一項目，不含"&"）求值成一個純文字值：
+#   - 引號文字 -> 去掉引號的內容。
+#   - 看起來像函數呼叫（例如COUNTIF(G:G,A2)）-> 透過_evaluate_formula()
+#     遞迴求值，讓COUNTIF/COUNTIFS的結果可以被當成IF()的條件、或被"&"
+#     接到別的文字後面，不限定只能是公式的最外層。
+#   - 裸數字 -> 直接當文字。
+#   - 裸儲存格參照（含$鎖定）-> 去掉$、查那一格目前的值。
+#   - 其餘 -> 當成字面文字（寬鬆處理，不強制要求加引號）。
+# 回傳{"ok":bool,"value":...,"message":(失敗時才有)}，失敗時要把
+# message往外傳，讓最外層公式還是能用偵探語氣提示玩家。
+func _evaluate_term(term: String) -> Dictionary:
+	var trimmed = term.strip_edges()
+
+	if trimmed.begins_with("\"") and trimmed.ends_with("\"") and trimmed.length() >= 2:
+		return {"ok": true, "value": trimmed.substr(1, trimmed.length() - 2)}
+
+	var call_regex = RegEx.new()
+	call_regex.compile("^[A-Za-z]+\\(.*\\)$")
+	if call_regex.search(trimmed) != null:
+		var inner = _evaluate_formula("=" + trimmed)
+		if not inner["ok"]:
+			return {"ok": false, "value": null, "message": inner["message"]}
+		return {"ok": true, "value": str(inner["value"])}
+
+	var unlocked = trimmed.replace("$", "")
+	if not unlocked.is_valid_float() and cell_value_lookup.has(unlocked):
+		return {"ok": true, "value": cell_value_lookup[unlocked]}
+
+	return {"ok": true, "value": unlocked}
+
+
+# 把整段運算式求值：先依頂層"&"切成幾段，每段各自_evaluate_term()後
+# 接成一個字串；如果完全沒有"&"，等於只有一段，直接回傳那一段的值
+# （這時候型別可能還是數字文字，不會被"&"硬轉成字串相接後的格式）。
+func _evaluate_scalar(expr: String) -> Dictionary:
+	var trimmed = expr.strip_edges()
+	var terms = _split_top_level(trimmed, "&")
+	if terms.size() <= 1:
+		return _evaluate_term(trimmed)
+
+	var combined := ""
+	for term in terms:
+		var term_eval = _evaluate_term(term)
+		if not term_eval["ok"]:
+			return term_eval
+		combined += String(term_eval["value"])
+	return {"ok": true, "value": combined}
+
+
+# 在條件字串裡（例如"COUNTIF(G:G,A2)=0"）找出第一個不在引號/括號內的
+# 比較運算子，切成左半部/運算子/右半部三段。兩個字元的運算子(<> >= <=)
+# 要先比對，否則">="會被誤判成單獨的">"。找不到運算子就回傳空字典。
+func _split_condition(expr: String) -> Dictionary:
+	var two_char_ops := ["<>", ">=", "<="]
+	var in_quotes := false
+	var paren_depth := 0
+	var i := 0
+	var n := expr.length()
+	while i < n:
+		var ch = expr[i]
+		if ch == "\"":
+			in_quotes = not in_quotes
+			i += 1
+			continue
+		if in_quotes:
+			i += 1
+			continue
+		if ch == "(":
+			paren_depth += 1
+			i += 1
+			continue
+		if ch == ")":
+			paren_depth -= 1
+			i += 1
+			continue
+		if paren_depth == 0:
+			var two = expr.substr(i, 2)
+			if two_char_ops.has(two):
+				return {"left": expr.substr(0, i), "operator": two, "right": expr.substr(i + 2)}
+			if ch == ">" or ch == "<" or ch == "=":
+				return {"left": expr.substr(0, i), "operator": ch, "right": expr.substr(i + 1)}
+		i += 1
+	return {}
+
+
+# IF()的條件參數求值成布林值：先找比較運算子，把左右兩半各自送進
+# _evaluate_scalar()算出實際值再比較；如果整段條件裡完全沒有運算子
+# （例如直接寫一個儲存格參照當條件），用「非空字串、非"0"、非"FALSE"」
+# 當作真值的寬鬆判斷。
+func _evaluate_condition(expr: String) -> Dictionary:
+	var trimmed = expr.strip_edges()
+	var split = _split_condition(trimmed)
+	if split.is_empty():
+		var fallback = _evaluate_scalar(trimmed)
+		if not fallback["ok"]:
+			return fallback
+		var v: String = String(fallback["value"]).strip_edges()
+		var truthy = v != "" and v != "0" and v.to_upper() != "FALSE"
+		return {"ok": true, "value": truthy}
+
+	var left_eval = _evaluate_scalar(split["left"])
+	if not left_eval["ok"]:
+		return left_eval
+	var right_eval = _evaluate_scalar(split["right"])
+	if not right_eval["ok"]:
+		return right_eval
+
+	var result = _compare_scalar_values(String(left_eval["value"]), String(right_eval["value"]), split["operator"])
+	return {"ok": true, "value": result}
+
+
+# 一般比較（IF條件、COUNTIF條件運算子比較共用）：數字就數值比較，文字
+# 就不分大小寫比較。跟_matches_criteria()的"="語意不同的地方是這裡不做
+# 萬用字元比對——真實Excel裡萬用字元只在COUNTIF/COUNTIFS這類條件函數
+# 才生效，一般的"="比較（例如IF的條件）是精確相等，不該被"*"/"?"影響。
+func _compare_scalar_values(left: String, right: String, operator: String) -> bool:
+	if left.is_valid_float() and right.is_valid_float():
+		var l = left.to_float()
+		var r = right.to_float()
+		match operator:
+			"=": return l == r
+			"<>": return l != r
+			">": return l > r
+			">=": return l >= r
+			"<": return l < r
+			"<=": return l <= r
+
+	match operator:
+		"=": return left.to_upper() == right.to_upper()
+		"<>": return left.to_upper() != right.to_upper()
+		">": return left.to_upper() > right.to_upper()
+		">=": return left.to_upper() >= right.to_upper()
+		"<": return left.to_upper() < right.to_upper()
+		"<=": return left.to_upper() <= right.to_upper()
+	return false
+
+
+# 把"A2:C9"這種範圍記法展開成cell_id清單，依「逐列、列內逐欄」的順序
+# 排列——COUNTIFS要求多個範圍逐一對應同一個index，所有範圍都用同一種
+# 展開順序才能正確配對。也接受單一儲存格（不含冒號），方便之後VLOOKUP
+# 等函數共用同一個範圍解析器。欄字母對照current_column_order（含補滿
+# 欄），不是寫死的COLUMN_ORDER，呼應表格本身「整個可視格線統一可選取」
+# 的設計。
+func _flatten_range(range_text: String) -> Array:
+	# 範圍本身不會被加引號，所以可以直接去掉所有$——$只是「鎖定列號讓
+	# 拖曳填滿時不要跟著移動」的標記（見_shift_relative_reference()），
+	# 不影響範圍解析時要找哪一欄哪一列。
+	var stripped = range_text.strip_edges().replace("$", "")
+
+	# 整欄參照（例如"E:E"，王佩丰教學COUNTIFS範例=countifs(E:E,J5,D:D,I5)
+	# 就是這種寫法），不限定列號——展開成目前表格上所有列（含補滿列）×
+	# 指定欄位範圍，呼應真實Excel「整欄」涵蓋整張表的行為。
+	var whole_col_regex = RegEx.new()
+	whole_col_regex.compile("^([A-Za-z]+):([A-Za-z]+)$")
+	var whole_col_match = whole_col_regex.search(stripped)
+	if whole_col_match != null:
+		var wc_start = whole_col_match.get_string(1).to_upper()
+		var wc_end = whole_col_match.get_string(2).to_upper()
+		var wc_start_index = current_column_order.find(wc_start)
+		var wc_end_index = current_column_order.find(wc_end)
+		if wc_start_index == -1 or wc_end_index == -1:
+			return []
+		var wc_lo = min(wc_start_index, wc_end_index)
+		var wc_hi = max(wc_start_index, wc_end_index)
+		var all_rows: Array = row_header_nodes.keys()
+		all_rows.sort()
+		var whole_col_ids: Array = []
+		for r in all_rows:
+			for ci in range(wc_lo, wc_hi + 1):
+				whole_col_ids.append(current_column_order[ci] + str(r))
+		return whole_col_ids
+
+	var range_regex = RegEx.new()
+	range_regex.compile("^([A-Za-z]+)(\\d+):([A-Za-z]+)(\\d+)$")
+	var range_match = range_regex.search(stripped)
+	if range_match == null:
+		var single_regex = RegEx.new()
+		single_regex.compile("^([A-Za-z]+)(\\d+)$")
+		var single_match = single_regex.search(stripped)
+		if single_match == null:
+			return []
+		var single_col = single_match.get_string(1).to_upper()
+		if not current_column_order.has(single_col):
+			return []
+		return [single_col + single_match.get_string(2)]
+
+	var col_start = range_match.get_string(1).to_upper()
+	var col_end = range_match.get_string(3).to_upper()
+	var col_start_index = current_column_order.find(col_start)
+	var col_end_index = current_column_order.find(col_end)
+	if col_start_index == -1 or col_end_index == -1:
+		return []
+
+	var lo_col_index = min(col_start_index, col_end_index)
+	var hi_col_index = max(col_start_index, col_end_index)
+	var lo_row = min(int(range_match.get_string(2)), int(range_match.get_string(4)))
+	var hi_row = max(int(range_match.get_string(2)), int(range_match.get_string(4)))
+
+	var ids: Array = []
+	for r in range(lo_row, hi_row + 1):
+		for ci in range(lo_col_index, hi_col_index + 1):
+			ids.append(current_column_order[ci] + str(r))
+	return ids
+
+
+# 判斷一個儲存格的值是否符合COUNTIF/COUNTIFS的條件參數，是整個公式引擎
+# 能「不管資料長什麼樣都算得出正確答案」的核心：
+#   - 條件可以加引號（"已體檢"、">=60"），也可以不加（裸數字、儲存格
+#     參照），對齊真實Excel兩種寫法都成立的習慣。
+#   - 支援比較運算子 <> >= <= > < =（沿用王佩丰教學=countif(B2:G2,">=60")
+#     的寫法），數字條件用數值比較，文字條件用字串比較（Excel本身對文字
+#     的><比較也是字典序）。
+#   - 不加運算子時，數字用數值相等、文字支援萬用字元 * (任意長度) 跟
+#     ? (單一字元)，呼應COUNTIF文字比對本來就是萬用字元比對而不是死板的
+#     字串==。
+#   - 條件如果是裸的儲存格參照（例如COUNTIF(G:G,A5)裡的A5，或加了$鎖定
+#     的$A$5），先去掉$、取那一格目前的值再套用上述規則，對齊「找重複
+#     值」教學案例的用法跟拖曳填滿的$鎖定語法。
+#   - 條件也可以是一段"&"字串連接運算式（例如=countif(A2:A3,A2&"*")），
+#     交給_evaluate_scalar()處理（跟IF()共用同一套運算式求值邏輯），
+#     連接完的結果才繼續套用下面的運算子/萬用字元判斷——所以">="&A2這種
+#     寫法接出">=600"之後，仍然會被當成比較運算子處理，不是字面文字。
+func _matches_criteria(cell_value: String, criteria_raw: String) -> bool:
+	var resolved = _evaluate_scalar(criteria_raw)
+	if not resolved["ok"]:
+		return false
+	var criteria_content: String = String(resolved["value"])
+
+	var operator := "="
+	var operand := criteria_content
+	for op in ["<>", ">=", "<=", ">", "<"]:
+		if criteria_content.begins_with(op):
+			operator = op
+			operand = criteria_content.substr(op.length())
+			break
+	if operator == "=" and criteria_content.begins_with("="):
+		operand = criteria_content.substr(1)
+
+	if cell_value.is_valid_float() and operand.is_valid_float():
+		var cell_number = cell_value.to_float()
+		var operand_number = operand.to_float()
+		match operator:
+			"=": return cell_number == operand_number
+			"<>": return cell_number != operand_number
+			">": return cell_number > operand_number
+			">=": return cell_number >= operand_number
+			"<": return cell_number < operand_number
+			"<=": return cell_number <= operand_number
+
+	match operator:
+		"=": return _wildcard_match(cell_value, operand)
+		"<>": return not _wildcard_match(cell_value, operand)
+		">": return cell_value.to_upper() > operand.to_upper()
+		">=": return cell_value.to_upper() >= operand.to_upper()
+		"<": return cell_value.to_upper() < operand.to_upper()
+		"<=": return cell_value.to_upper() <= operand.to_upper()
+	return false
+
+
+# 把Excel萬用字元（* 任意長度、? 單一字元）轉成regex比對，沒有萬用字元
+# 時就是不分大小寫的完全相等。
+func _wildcard_match(value: String, pattern: String) -> bool:
+	if pattern.find("*") == -1 and pattern.find("?") == -1:
+		return value.to_upper() == pattern.to_upper()
+
+	var regex_specials := ["\\", ".", "^", "$", "+", "(", ")", "[", "]", "{", "}", "|"]
+	var regex_pattern := "^"
+	for ch in pattern.to_upper():
+		if ch == "*":
+			regex_pattern += ".*"
+		elif ch == "?":
+			regex_pattern += "."
+		elif regex_specials.has(ch):
+			regex_pattern += "\\" + ch
+		else:
+			regex_pattern += ch
+	regex_pattern += "$"
+
+	var regex = RegEx.new()
+	regex.compile(regex_pattern)
+	return regex.search(value.to_upper()) != null
