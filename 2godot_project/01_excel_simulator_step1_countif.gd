@@ -212,9 +212,11 @@ const TABLE_TWO_NAMES := ["T1", "T2", "T3", "T5", "T6", "T7", "T8"]
 
 const EXAMPLE_FORMULA = '=COUNTIF(J2:J9,A2)'
 
-# ---- 占位文字（依嚴格規則4不放真實案件內容）----
-const PLACEHOLDER_CASE_TITLE := "占位：第1章 · 第一份委託"
-const PLACEHOLDER_CASE_OBJECTIVES := ["占位案件目標 1", "占位案件目標 2"]
+# 章節名稱/案件目標不再是寫死的占位文字，改用CaseData (07_case_data.gd)
+# 讀data/cases/case_01.json——這個COUNTIF原型對應劇本場景④（第一關），
+# 見_build_right_sidebar()。
+const CASE_ID := "case_01"
+const THIS_STAGE_ID := "stage_countif"
 const PLACEHOLDER_BOTTOM_BAR_DEFAULT := "占位：系統提示語（目前請使用COUNTIF檢查狀態欄）"
 const SIDEBAR_TAB_LABELS := ["證言", "物證", "名冊", "交易紀錄"]
 
@@ -517,6 +519,9 @@ var category_button_texture_hover: Texture2D
 var category_button_texture_selected: Texture2D
 var grid_scroll_container: ScrollContainer  # 表格外層的捲動容器，量它實際大小來算要補幾欄/幾列空白格
 
+# 案件資料結構：章節名稱/案件目標讀這裡，_ready()一開始就載入。
+var case_data: Dictionary = {}
+
 # 拖拉填滿狀態
 var is_filling: bool = false
 var fill_source_row: int = -1
@@ -559,6 +564,7 @@ func _ready() -> void:
 	cell_base_bg.clear()
 	col_header_nodes.clear()
 	row_header_nodes.clear()
+	case_data = CaseData.load_case(CASE_ID)
 	add_child(load("res://05_ui_tweaker_tool.tscn").instantiate())
 
 	var bg = ColorRect.new()
@@ -662,7 +668,7 @@ func _build_top_bar() -> PanelContainer:
 	chapter_root.add_child(chapter_bg)
 
 	var subtitle = Label.new()
-	subtitle.text = "第1章：第一份委託"
+	subtitle.text = case_data.get("chapter_name", "")
 	_apply_label_style(subtitle, CHAPTER_LABEL_FONT_SIZE, COLOR_TEXT_MUTED)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -989,9 +995,16 @@ func _build_right_sidebar() -> PanelContainer:
 	_apply_label_style(title_obj, SIDEBAR_CARD_TITLE_FONT_SIZE, COLOR_TEXT_BRIGHT)
 	objective_vbox.add_child(title_obj)
 
-	objective_vbox.add_child(_build_objective_row("找出證言矛盾", "pending", COLOR_TEXT_MAIN))
-	objective_vbox.add_child(_build_objective_row("統計不在場人數", "active", COLOR_ACCENT_GREEN))
-	objective_vbox.add_child(_build_objective_row("比對交易紀錄", "pending", COLOR_TEXT_MAIN))
+	# 這個COUNTIF原型對應劇本場景④（第一關），所以case_data.excel_stages
+	# 第一項（stage_countif）顯示成「進行中」，其餘關卡顯示成「尚未開始」
+	# ——三關的目標文字直接讀CaseData，不再寫死成跟劇本無關的占位字串。
+	for stage in case_data.get("excel_stages", []):
+		var is_current_stage: bool = stage.get("stage_id", "") == THIS_STAGE_ID
+		objective_vbox.add_child(_build_objective_row(
+			stage.get("objective_text", ""),
+			"active" if is_current_stage else "pending",
+			COLOR_ACCENT_GREEN if is_current_stage else COLOR_TEXT_MAIN
+		))
 
 	# ---- 公式提示框 ----
 	var hint_panel = PanelContainer.new()

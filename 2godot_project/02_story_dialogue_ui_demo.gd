@@ -86,13 +86,11 @@ const SOPHIA_TEMP := CHARACTER_DIR + "sophia_story_transparent_v0_1.png"
 # 哪一張立繪、顯示在哪個位置——speaker_name只是姓名牌上的文字，兩者
 # 故意分開，姓名牌文字可以跟立繪id無關（例如同一個角色不同稱號）。
 const SPEAKER_ID_HOST := "host"
-const SPEAKER_ID_SOPHIA := "sophia"
 # 「host以外的其他角色」共用同一個置中立繪欄位(ANCHOR_CHAR)，這裡只要
-# 換貼圖就能換角色顯示，之後其餘2位主角加入只要在這裡新增對照即可，
-# 不用再加新的立繪欄位/錨點。
-const CHARACTER_SPRITE_TEXTURES := {
-	SPEAKER_ID_SOPHIA: SOPHIA_TEMP,
-}
+# 換貼圖就能換角色顯示。對照表不再是寫死的常數，改成_ready()時從
+# CaseData讀到的case_data.characters動態建立（見character_sprite_
+# textures），尚無正式立繪的NPC（sprite欄位是空字串）不會被收進這份
+# 對照表，_update_speaker_sprite()找不到對照時會直接隱藏立繪，不報錯。
 const BUTTON_NORMAL := UI_SKIN_DIR + "button_icon_frame_normal.png"
 const BUTTON_HOVER := UI_SKIN_DIR + "button_icon_frame_hover.png"
 const BUTTON_PRESSED := UI_SKIN_DIR + "button_icon_frame_pressed.png"
@@ -312,9 +310,11 @@ const GAP_DIALOGUE_LAYOUT := 18
 # ------------------------------
 # 設定區：原型測試資料
 # ------------------------------
-const CASE_OBJECTIVES := [
-	"確認委託人的證言",
-]
+# 章節名稱/對白腳本/案件目標/Excel解謎器各關設定不再寫死在這個檔案裡，
+# 改用CaseData (07_case_data.gd) 讀data/cases/case_01.json，跟UI完全
+# 解耦——見_ready()的case_data載入，跟下方character_sprite_textures/
+# dialogue_lines兩個從case_data算出來的狀態變數。
+const CASE_ID := "case_01"
 
 const SETTINGS_TAB_LABEL_AUDIO := "音訊設定"
 const SETTINGS_TAB_LABEL_DISPLAY := "顯示與輔助"
@@ -327,48 +327,6 @@ const TOP_MENU_ITEMS := [
 	{"label": "自動", "key": "auto"},
 ]
 
-const DIALOGUE_LINES := [
-	{
-		"type": "dialogue",
-		"speaker_id": SPEAKER_ID_HOST,
-		"speaker_name": "莉希雅",
-		"text": "第一份委託，終於走到我的門前了。"
-	},
-	{
-		"type": "dialogue",
-		"speaker_id": SPEAKER_ID_HOST,
-		"speaker_name": "莉希雅",
-		"text": "先別急著相信任何證言。資料會比人誠實得多。"
-	},
-	# 以下這句是demo測試用的占位對白，純粹用來驗證「換到其他角色說話
-	# 時，立繪要切換成置中顯示」的機制，不是案件1正式劇本內容。
-	{
-		"type": "dialogue",
-		"speaker_id": SPEAKER_ID_SOPHIA,
-		"speaker_name": "蘇菲亞",
-		"text": "（佔位對白）莉莉，妳又把自己關在工作室裡敲敲打打了吧？"
-	},
-	{
-		"type": "system",
-		"speaker_name": "調查紀錄",
-		"text": "案件目標已更新。"
-	},
-	# 以下這句是demo測試用的占位對白，純粹用來驗證「CG場景切換成全螢幕
-	# 插畫+矮文字條、隱藏一般對話框/姓名牌/角色立繪」的機制，不是案件1
-	# 正式劇本內容，CG本身目前也只是佔位色平面，還沒有正式插畫素材。
-	{
-		"type": "dialogue",
-		"scene": "cg",
-		"text": "（佔位CG對白）窗外的雨還沒停，這份委託資料攤在桌上，比想像中更棘手。"
-	},
-	{
-		"type": "dialogue",
-		"speaker_id": SPEAKER_ID_HOST,
-		"speaker_name": "莉希雅",
-		"text": "把委託人的時間、地點和交易紀錄整理出來，我們再開始判斷。"
-	},
-]
-
 # 存讀檔模式：只影響標題文字跟空白格是否可點擊，格子排版本身不變。
 const SAVE_LOAD_MODE_SAVE := "save"
 const SAVE_LOAD_MODE_LOAD := "load"
@@ -376,25 +334,46 @@ const SAVE_LOAD_MODE_LOAD := "load"
 const SAVE_LOAD_GRID_COLUMNS := 3
 const SAVE_LOAD_LABEL_EMPTY := "空白檔案"
 
-# 存檔資料裡的章節/地點/狀態文字：案件資料結構零件完成前，整個demo只有
-# 一個章節、一個地點，先用結構性常數頂著，之後改成讀案件資料結構。
-const SAVE_DATA_CHAPTER := "第1章"
-const SAVE_DATA_LOCATION := "白塔街偵探所"
-const SAVE_DATA_STATUS := "調查中"
-
 # ------------------------------
 # 狀態區：畫面節點與互動狀態
 # ------------------------------
-var current_line_index := 0
+# 整份案件資料（章節名稱/對白腳本/案件目標/Excel解謎器各關設定/角色
+# 立繪對照），_ready()一開始就從CaseData讀進來，之後全部從這裡取用。
+var case_data: Dictionary = {}
+# 從case_data拆出來的對白腳本陣列，避免每次播放都重新呼叫CaseData。
+var dialogue_lines: Array = []
+# 角色立繪資料（含host）：character_id -> case_data.characters裡的那份
+# Dictionary（"name"/"sprite"/"expressions"），取代原本寫死的
+# CHARACTER_SPRITE_TEXTURES常數跟HOST_TEMP/SOPHIA_TEMP寫死路徑——host
+# 現在跟其他角色一樣，預設立繪跟表情差分都從case_data讀，不再特殊待遇。
+var character_data: Dictionary = {}
+# 背景id -> 圖檔路徑，_show_line()依對白資料的"background"欄位切換。
+var background_lookup: Dictionary = {}
+# CG插畫id -> 圖檔路徑，_show_line()依對白資料的"cg"欄位（只在
+# "scene":"cg"那幾句才有意義）切換。
+var cg_lookup: Dictionary = {}
 
-# 第一個案件目標是否已完成：存讀檔要保存/還原這個狀態，避免讀檔後目標
-# 顯示退回未完成。案件資料結構零件完成前，先用單一bool頂著一個目標。
-var objective_first_done := false
+var current_line_index := 0
+# 目前畫面上的背景id，空字串代表還沒設定過（開場第一句）；_switch_
+# background()用這個判斷「是不是真的换了背景」，避免同一個背景重複觸發
+# 黑屏轉場，也讓開場第一次設定背景時可以跳過轉場直接顯示。
+var current_background_id := ""
+
+# 目前案件目標清單裡，進行中(active)的那一項id；空字串代表還沒有任何
+# 目標被觸發（劇情剛開場、尚未接案）。存讀檔要保存/還原這個id，案件目標
+# 面板用CaseData.get_active_objectives()依這個id重新算出整份清單顯示，
+# 不再像舊版只用單一bool切換唯一一條占位目標。
+var current_objective_id := ""
 
 # 劇情對白是否正在播放打字動畫中
 var is_typing := false
 # 用於控制打字機顯示比例的 Tween 動畫物件
 var typing_tween: Tween
+
+# 劇情特效零件（08_dialogue_effects.gd）：提供shake/flash/punch_zoom
+# 三種效果，_show_line()依raw_line的"effect"欄位呼叫，本檔案完全不認識
+# 效果動畫實作細節，只負責「決定何時觸發哪一種」。
+var dialogue_effects: Control
 
 var name_plate: TextureRect
 var name_label: Label
@@ -425,6 +404,8 @@ var dialogue_log_panel: Control
 var host_sprite: TextureRect       # 莉希雅(Host)立繪，固定左下角、蓋在對話框上
 var host_sprite_shadow: TextureRect # host立繪的人形輪廓陰影，跟host_sprite一起顯示/隱藏
 var character_sprite: TextureRect # host以外其他角色共用的置中立繪欄位，依speaker_id換貼圖
+var background_rect: TextureRect  # 場景背景圖，_switch_background()依對白資料的"background"欄位換貼圖
+var cg_image_rect: TextureRect    # CG插畫實際內容，疊在cg_layer佔位色之上；沒有對應素材時維持隱藏，底下的佔位色+文字會照常顯示
 var auto_button: BaseButton
 var auto_advance_timer: Timer
 var auto_advance_enabled := false
@@ -442,8 +423,35 @@ var auto_advance_speed_ratio := AUTO_ADVANCE_SPEED_INITIAL
 func _ready() -> void:
 	# 設為 IGNORE，防止根控制節點自身消耗滑鼠點擊，使點擊事件能順利傳遞至 _unhandled_input()
 	self.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_load_case_data()
 	_build_ui()
 	_show_line(0)
+
+
+# 從CaseData讀整份案件資料，並拆出後面建版面/播放對白會用到的衍生資料：
+# 對白腳本陣列、角色立繪資料（含host）、背景/CG插畫的id對照表。一定要
+# 在_build_ui()之前呼叫，案件目標面板/對白紀錄彈窗/背景/host立繪建版面
+# 時都需要讀到這些資料。
+func _load_case_data() -> void:
+	case_data = CaseData.load_case(CASE_ID)
+	dialogue_lines = CaseData.get_dialogue_lines(case_data)
+	character_data = case_data.get("characters", {})
+	background_lookup = case_data.get("backgrounds", {})
+	cg_lookup = case_data.get("cg_images", {})
+
+
+# 依角色id跟想要的表情，算出實際要load()的立繪檔路徑：表情有對照就用
+# 表情圖，沒有（包含這個角色根本沒有expressions欄位、或expression傳空
+# 字串）就退回該角色的預設sprite；角色本身不存在於character_data則回傳
+# 空字串，呼叫端要自己判斷空字串代表「沒有立繪可顯示」。
+func _resolve_sprite_path(speaker_id: String, expression: String) -> String:
+	if not character_data.has(speaker_id):
+		return ""
+	var info: Dictionary = character_data[speaker_id]
+	var expressions: Dictionary = info.get("expressions", {})
+	if expression != "" and expressions.has(expression):
+		return expressions[expression]
+	return info.get("sprite", "")
 
 
 func _build_ui() -> void:
@@ -455,6 +463,7 @@ func _build_ui() -> void:
 	_build_host_sprite()         # 4. 最上層：莉希雅 (Host)，蓋在對話框上面
 	_build_cg_layer()            # 5. CG（全螢幕過場插畫）佔位層，平常隱藏
 	_build_cg_text_bar()         # 6. CG模式專用的矮+貼齊螢幕邊緣文字條，平常隱藏
+	_build_dialogue_effects()    # 7. 最上層：劇情特效覆蓋層，要蓋在所有畫面內容之上才能看到全螢幕閃光
 	_build_settings_popup()
 	_build_save_load_popup()
 	_build_dialogue_log_popup()
@@ -468,9 +477,15 @@ func _build_host_sprite() -> void:
 	# 改變顏色不會動到alpha透空範圍，所以陰影的輪廓會跟立繪本身的人形
 	# 邊緣完全一致，偏移後自然形成貼地投影的效果。要先加進畫面（在
 	# 主體host之前），陰影才會被畫在host底下，不會蓋住本體。
+	# 預設立繪改讀case_data（_resolve_sprite_path），HOST_TEMP只在
+	# case_data沒有host這個角色時當保險的退路，避免空字串傳給load()。
+	var host_default_texture: String = _resolve_sprite_path(SPEAKER_ID_HOST, "")
+	if host_default_texture == "":
+		host_default_texture = HOST_TEMP
+
 	var shadow := TextureRect.new()
 	shadow.name = "HostSpriteShadow_Lisia"
-	shadow.texture = load(HOST_TEMP)
+	shadow.texture = load(host_default_texture)
 	_apply_anchors(shadow, ANCHOR_HOST)
 	# _apply_anchors()會把四邊offset都歸零，這裡刻意把四邊offset都加上
 	# 同一個位移量——左右offset一起平移、上下offset一起平移，矩形大小
@@ -489,7 +504,7 @@ func _build_host_sprite() -> void:
 
 	var host := TextureRect.new()
 	host.name = "HostSprite_Lisia_StoryTransparentV01"
-	host.texture = load(HOST_TEMP)
+	host.texture = load(host_default_texture)
 	_apply_anchors(host, ANCHOR_HOST)
 	host.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	# 用CENTERED（不裁切）：COVERED會把立繪邊緣的半透明髮絲细節硬切掉，
@@ -528,6 +543,19 @@ func _build_cg_layer() -> void:
 	placeholder_label.set_anchors_preset(Control.PRESET_CENTER)
 	layer.add_child(placeholder_label)
 
+	# 疊在佔位色/佔位文字之上的真正CG插畫，預設隱藏——_show_line()找到
+	# 對白資料的"cg"欄位對應的素材時才會set texture+顯示，找不到就維持
+	# 隱藏，讓底下的佔位色/文字照常顯示（不會因為漏填cg id而開窗）。
+	var image := TextureRect.new()
+	image.name = "CgLayer_Image"
+	image.set_anchors_preset(Control.PRESET_FULL_RECT)
+	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	image.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	image.visible = false
+	layer.add_child(image)
+	cg_image_rect = image
+
 
 # CG模式專用的文字條：矮、寬度貼齊螢幕左右邊緣的簡單矩形，取代平常那個
 # 有雕花外框、姓名牌、會被host立繪蓋住一角的對話框——CG插畫本身才是
@@ -558,9 +586,22 @@ func _build_cg_text_bar() -> void:
 	margin.add_child(cg_text_label)
 
 
+# 劇情特效零件（08_dialogue_effects.tscn）：跟05_ui_tweaker_tool一樣是
+# 可以直接add_child()掛載的工具節點，掛上去後自己鋪滿整個畫面，
+# 本檔案只拿它的實體呼叫shake()/flash()/punch_zoom()三個public函式，
+# 完全不需要知道動畫怎麼實作。
+func _build_dialogue_effects() -> void:
+	dialogue_effects = load("res://08_dialogue_effects.tscn").instantiate()
+	add_child(dialogue_effects)
+
+
 func _build_background() -> void:
 	var background := TextureRect.new()
-	background.name = "Background_DetectiveOffice_RainyNightV01"
+	background.name = "Background_Scene"
+	# 這裡的初始貼圖只是建構時的暫時值，_show_line(0)很快就會依
+	# 第一句對白資料的"background"欄位透過_switch_background()換成
+	# 真正的場景背景（第一次設定時current_background_id是空字串，
+	# 會跳過黑屏轉場直接換貼圖，玩家不會看到這張暫時背景閃現）。
 	background.texture = load(BG_STORY_OFFICE)
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -568,6 +609,7 @@ func _build_background() -> void:
 	# 設為 IGNORE，確保背景大圖本身不消耗滑鼠點擊，能使點擊落到背景空白處時正確推進對白
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(background)
+	background_rect = background
 
 	var vignette := ColorRect.new()
 	vignette.name = "MoodOverlay_DimEdges"
@@ -586,13 +628,20 @@ func _build_background() -> void:
 
 
 # host以外其他角色共用的置中立繪欄位：哪個角色說話就把texture換成那個
-# 角色的圖（見CHARACTER_SPRITE_TEXTURES），不是Sophia的專屬節點——之前
-# 節點名稱/變數名稱寫死成Sophia，現在角色可以換，名稱跟著改成通用的
-# CharacterSprite，避免名稱跟實際顯示內容不一致。
+# 角色的圖（見character_data/_resolve_sprite_path()），不是Sophia的
+# 專屬節點——節點名稱/變數名稱是通用的CharacterSprite，避免名稱跟實際
+# 顯示內容不一致。
 func _build_character_sprite() -> void:
+	# 這個節點在任何一句對白播放之前都是隱藏的，這裡的預設貼圖只是
+	# 避免texture留空——隨便挑一個會出現在置中欄位的角色（蘇菲亞）當
+	# 初始值，_show_line()播放第一句話時就會依實際speaker_id换成正確圖。
+	var default_texture: String = _resolve_sprite_path("sophia", "")
+	if default_texture == "":
+		default_texture = SOPHIA_TEMP
+
 	var character := TextureRect.new()
 	character.name = "CharacterSprite_OtherSpeaker"
-	character.texture = load(SOPHIA_TEMP)
+	character.texture = load(default_texture)
 	_apply_anchors(character, ANCHOR_CHAR)
 	character.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	character.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -735,26 +784,37 @@ func _build_objective_panel() -> void:
 	objective_list.add_theme_constant_override("separation", GAP_OBJECTIVE_LIST)
 	margin.add_child(objective_list)
 
-	for objective in CASE_OBJECTIVES:
+	_refresh_objective_panel()
+
+
+# 依current_objective_id重新算出「目前案件目標清單」並重建面板內容：
+# 在這之前出現過的目標標記done（打勾、變暗），目前這一個標記active
+# （綠色◆），之後還沒出現的目標不列入清單，對齊story_dialogue_ui_
+# component_spec第7節「完成目標時顯示勾選或變暗」的規則。
+func _refresh_objective_panel() -> void:
+	for child in objective_list.get_children():
+		child.queue_free()
+
+	for objective in CaseData.get_active_objectives(case_data, current_objective_id):
 		objective_list.add_child(_make_objective_item_row(objective))
 
 
+func _make_objective_item_row(objective: Dictionary) -> HBoxContainer:
+	var is_done: bool = objective.get("state", "") == "done"
 
-
-func _make_objective_item_row(objective_text: String) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", GAP_OBJECTIVE_ITEM_ICON)
 
 	var icon := Label.new()
 	icon.name = "ObjectiveIcon"
-	icon.text = "◇"
-	_apply_label_style(icon, FONT_OBJECTIVE_ITEM, COLOR_ACCENT_GREEN)
+	icon.text = "✓" if is_done else "◆"
+	_apply_label_style(icon, FONT_OBJECTIVE_ITEM, COLOR_TEXT_MUTED if is_done else COLOR_ACCENT_GREEN)
 	row.add_child(icon)
 
 	var text := Label.new()
 	text.name = "ObjectiveText"
-	text.text = objective_text
-	_apply_label_style(text, FONT_OBJECTIVE_ITEM, COLOR_TEXT_MAIN)
+	text.text = objective.get("text", "")
+	_apply_label_style(text, FONT_OBJECTIVE_ITEM, COLOR_TEXT_MUTED if is_done else COLOR_TEXT_MAIN)
 	row.add_child(text)
 	return row
 
@@ -1186,8 +1246,8 @@ func _build_dialogue_log_popup() -> void:
 	# 徹底避免 Godot ScrollContainer 子節點在自動折行時無法自適應縮小而撐大/溢出左右邊界的問題。
 	scroll.resized.connect(func(): entries.custom_minimum_size.x = scroll.size.x - 24)
 
-	for line in DIALOGUE_LINES:
-		entries.add_child(_make_dialogue_log_entry(line))
+	for line in dialogue_lines:
+		entries.add_child(_make_dialogue_log_entry(_resolve_display_line(line)))
 
 
 # ------------------------------
@@ -1322,31 +1382,32 @@ func _on_save_load_slot_pressed(slot_index: int) -> void:
 		_close_save_load_popup()
 
 
-# 把目前遊戲進度整理成存檔用的Dictionary。章節/地點是結構性常數
-# （案件資料結構零件完成前，整個demo只有一個章節），目前對白index跟
-# 第一個案件目標完成狀態才是真正會隨玩家進度變動的資料。
+# 把目前遊戲進度整理成存檔用的Dictionary。章節名稱/地點/狀態文字改讀
+# case_data（CaseData載入的案件資料結構），不再是寫死的結構性常數；
+# 目前對白index跟目前案件目標id才是真正會隨玩家進度變動的資料。
 func _gather_save_data() -> Dictionary:
+	var save_info: Dictionary = case_data.get("save_data", {})
 	return {
-		"chapter": SAVE_DATA_CHAPTER,
-		"location": SAVE_DATA_LOCATION,
-		"status": SAVE_DATA_STATUS,
+		"chapter": case_data.get("chapter_name", ""),
+		"location": save_info.get("location", ""),
+		"status": save_info.get("status", ""),
 		"current_line_index": current_line_index,
-		"objective_first_done": objective_first_done,
+		"objective_id": current_objective_id,
 	}
 
 
-# 把讀檔讀到的Dictionary還原回畫面狀態：跳到存檔時的那一句對白，並
-# 還原案件目標的完成標記，避免讀檔後目標顯示退回未完成。
+# 把讀檔讀到的Dictionary還原回畫面狀態：先還原目前案件目標id並重建
+# 案件目標面板，再跳到存檔時的那一句對白（_show_line()如果剛好播到
+# 有objective_update的句子，會再設一次同樣的id，不影響結果）。
 func _apply_save_data(save_data: Dictionary) -> void:
 	if save_data.is_empty():
 		return
 
-	current_line_index = clampi(save_data.get("current_line_index", 0), 0, DIALOGUE_LINES.size() - 1)
-	_show_line(current_line_index)
+	current_objective_id = save_data.get("objective_id", "")
+	_refresh_objective_panel()
 
-	objective_first_done = save_data.get("objective_first_done", false)
-	if objective_first_done:
-		_mark_first_objective_done()
+	current_line_index = clampi(save_data.get("current_line_index", 0), 0, dialogue_lines.size() - 1)
+	_show_line(current_line_index)
 
 
 func _open_dialogue_log_popup() -> void:
@@ -1408,12 +1469,55 @@ func _on_auto_advance_timeout() -> void:
 # ------------------------------
 # 對白播放區
 # ------------------------------
+# 把"hotspot"/"excel_stage_trigger"這兩種「劇本結構標記」轉成可以直接
+# 顯示的對白格式（type/speaker_name/text），dialogue/narration/system
+# 三種原本就符合story_dialogue_ui_component_spec第6節格式，直接照原樣
+# 回傳。excel_stage_trigger要顯示的標題/目標文字來自case_data.excel_
+# stages，不寫死在這個函式裡。
+func _resolve_display_line(line: Dictionary) -> Dictionary:
+	match line.get("type", ""):
+		"hotspot":
+			return {"type": "system", "speaker_name": "調查紀錄", "text": line.get("text", "")}
+		"excel_stage_trigger":
+			var stage := CaseData.get_excel_stage(case_data, line.get("stage_id", ""))
+			var stage_text: String = str(stage.get("title", "數據計算儀")) + "：" + str(stage.get("objective_text", ""))
+			return {"type": "system", "speaker_name": "數據計算儀", "text": stage_text}
+		_:
+			return line
+
+
+# 依background_lookup換場景背景：background_id找不到對應路徑就直接
+# 不做任何事（這句話沒有要換背景）。current_background_id還是空字串
+# 代表這是整場戲第一次設定背景，直接換貼圖、不要黑屏轉場（沒有「前一個
+# 畫面」可以淡出，硬套轉場只會讓開場多閃一次黑屏）；其餘情況才透過
+# dialogue_effects的fade_to_black()/fade_from_black()包住換貼圖的瞬間。
+func _switch_background(background_id: String) -> void:
+	if not background_lookup.has(background_id) or background_id == current_background_id:
+		return
+
+	var path: String = background_lookup[background_id]
+	var is_first_background := current_background_id == ""
+	current_background_id = background_id
+
+	if is_first_background:
+		background_rect.texture = load(path)
+		return
+
+	await dialogue_effects.fade_to_black()
+	background_rect.texture = load(path)
+	await dialogue_effects.fade_from_black()
+
+
 func _show_line(index: int) -> void:
-	var line: Dictionary = DIALOGUE_LINES[index]
+	var raw_line: Dictionary = dialogue_lines[index]
+	var line: Dictionary = _resolve_display_line(raw_line)
 
 	# 若先前有播放中的打字動畫，先將其強行終止
 	if typing_tween != null and typing_tween.is_valid():
 		typing_tween.kill()
+
+	if raw_line.has("background"):
+		await _switch_background(raw_line["background"])
 
 	# "scene": "cg" 是這句話專用的場景標記，跟"type"（dialogue/system/
 	# narration）無關——同一句話可以是「CG場景裡的對白」。CG場景要切換
@@ -1422,12 +1526,23 @@ func _show_line(index: int) -> void:
 	var is_cg_scene: bool = line.get("scene", "") == "cg"
 	_set_cg_mode(is_cg_scene)
 
+	if is_cg_scene:
+		# cg欄位指向cg_lookup的id，找不到對應素材就讓cg_image_rect保持
+		# 隱藏，底下cg_layer原本的佔位色+「CG（佔位）」文字會照常顯示，
+		# 不會因為案件資料漏填cg id而整個畫面開窗。
+		var cg_id: String = raw_line.get("cg", "")
+		if cg_lookup.has(cg_id):
+			cg_image_rect.texture = load(cg_lookup[cg_id])
+			cg_image_rect.visible = true
+		else:
+			cg_image_rect.visible = false
+
 	active_dialogue_label = cg_text_label if is_cg_scene else dialogue_label
 	active_dialogue_label.text = line["text"]
 	active_dialogue_label.visible_ratio = 0.0
 
 	if not is_cg_scene:
-		_update_speaker_sprite(line.get("speaker_id", ""))
+		_update_speaker_sprite(line.get("speaker_id", ""), raw_line.get("expression", ""))
 
 		if line["type"] == "narration":
 			name_plate.visible = false
@@ -1436,8 +1551,25 @@ func _show_line(index: int) -> void:
 			name_plate.visible = true
 			name_label.text = line["speaker_name"]
 
-	if line["type"] == "system":
-		_mark_first_objective_done()
+	# objective_update是原始劇本資料的欄位，只會出現在dialogue/narration/
+	# system這幾種真正的劇本句子上（hotspot/excel_stage_trigger是結構
+	# 標記，不會有這欄位），所以讀raw_line而不是已經被_resolve_display_
+	# line()轉換過的line。
+	if raw_line.has("objective_update"):
+		current_objective_id = raw_line["objective_update"]
+		_refresh_objective_panel()
+
+	# effect同樣是只會出現在原始劇本句子上的欄位，邏輯跟objective_update
+	# 一樣讀raw_line。shake/punch_zoom都對dialogue_box_panel做（玩家視線
+	# 本來就停在對話框上），flash是全螢幕效果不需要target。
+	if raw_line.has("effect"):
+		match raw_line["effect"]:
+			"shake":
+				dialogue_effects.shake(dialogue_box_panel)
+			"flash":
+				dialogue_effects.flash()
+			"punch_zoom":
+				dialogue_effects.punch_zoom(dialogue_box_panel)
 
 	# CG場景的文字要整句直接出現，不要逐字打字機效果——CG本身已經是
 	# 一次性呈現的畫面，逐字慢慢跳字反而拖慢節奏，跟一般場景對白「想要
@@ -1487,21 +1619,35 @@ func _set_cg_mode(is_cg: bool) -> void:
 # 小說「同一時間只有一個角色在說話、立繪只顯示那一位」的習慣：
 #   - speaker_id是host(莉希雅)：顯示host_sprite（固定左下角、蓋在對話框
 #     上面），隱藏character_sprite。
-#   - speaker_id是CHARACTER_SPRITE_TEXTURES裡其他角色：character_sprite
-#     換成那個角色的貼圖、顯示在置中欄位，隱藏host_sprite。
+#   - speaker_id是character_data裡其他角色：character_sprite換成那個
+#     角色的貼圖（依expression挑表情差分，見_resolve_sprite_path()），
+#     顯示在置中欄位，隱藏host_sprite。
 #   - 沒有speaker_id（例如系統訊息「調查紀錄」）：兩個都隱藏，沒有人
 #     在「說話」，沒有立繪可以顯示。
 # 同一時刻host_sprite跟character_sprite最多只會有一個是visible=true。
-func _update_speaker_sprite(speaker_id: String) -> void:
+# 改用dialogue_effects.fade_sprite_visibility()淡入淡出，取代瞬間切換
+# visible——只在「真的要切換顯示/隱藏」時才觸發淡入淡出動畫，已經顯示
+# 中的角色繼續說話（visible狀態不變）不會被打斷重播一次動畫。換表情
+# （包括host自己的表情差分）或換成另一位「同樣顯示在置中欄位」的角色
+# 時，texture直接換貼圖、不淡出淡入，這是目前簡化的做法，之後若需要
+# 表情切換也要有交叉淡化，再擴充_dialogue_effects.gd的crossfade。
+func _update_speaker_sprite(speaker_id: String, expression: String) -> void:
 	var is_host_speaking := speaker_id == SPEAKER_ID_HOST
-	host_sprite.visible = is_host_speaking
-	host_sprite_shadow.visible = is_host_speaking
+	if is_host_speaking:
+		var host_path: String = _resolve_sprite_path(speaker_id, expression)
+		if host_path != "":
+			host_sprite.texture = load(host_path)
+			host_sprite_shadow.texture = load(host_path)
+	if host_sprite.visible != is_host_speaking:
+		dialogue_effects.fade_sprite_visibility(host_sprite, is_host_speaking)
+		dialogue_effects.fade_sprite_visibility(host_sprite_shadow, is_host_speaking)
 
-	if speaker_id != SPEAKER_ID_HOST and CHARACTER_SPRITE_TEXTURES.has(speaker_id):
-		character_sprite.texture = load(CHARACTER_SPRITE_TEXTURES[speaker_id])
-		character_sprite.visible = true
-	else:
-		character_sprite.visible = false
+	var character_path: String = _resolve_sprite_path(speaker_id, expression)
+	var should_show_character := speaker_id != SPEAKER_ID_HOST and character_path != ""
+	if should_show_character:
+		character_sprite.texture = load(character_path)
+	if character_sprite.visible != should_show_character:
+		dialogue_effects.fade_sprite_visibility(character_sprite, should_show_character)
 
 
 func _next_line() -> void:
@@ -1519,23 +1665,10 @@ func _next_line() -> void:
 	# 文字已顯示完整時，點擊才會前進至下一句對白
 	current_line_index += 1
 
-	if current_line_index >= DIALOGUE_LINES.size():
+	if current_line_index >= dialogue_lines.size():
 		current_line_index = 0
 
 	_show_line(current_line_index)
-
-
-func _mark_first_objective_done() -> void:
-	objective_first_done = true
-
-	if objective_list.get_child_count() < 1:
-		return
-
-	var first_row := objective_list.get_child(0) as HBoxContainer
-	var icon := first_row.get_node("ObjectiveIcon") as Label
-	var text := first_row.get_node("ObjectiveText") as Label
-	icon.text = "◆"
-	text.add_theme_color_override("font_color", Color(COLOR_ACCENT_GREEN))
 
 
 # ------------------------------

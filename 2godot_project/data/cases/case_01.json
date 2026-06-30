@@ -1,0 +1,2427 @@
+{
+  "case_id": "case_01",
+  "case_title": "缺席者的名字",
+  "chapter_id": "ch1",
+  "chapter_name": "第1章：第一份委託",
+  "save_data": {
+    "location": "白塔街偵探所",
+    "status": "調查中"
+  },
+  "characters": {
+    "host": {
+      "name": "莉希雅",
+      "sprite": "res://assets/characters/host_lisia_story_transparent_v0_1.png",
+      "expressions": {
+        "confidence": "res://assets/characters/host_lisia_confidence_v0_1.png",
+        "dramatic_cry": "res://assets/characters/host_lisia_dramatic_cry_v0_1.png",
+        "fake_serious": "res://assets/characters/host_lisia_fake_serious_v0_1.png",
+        "fake_stupid": "res://assets/characters/host_lisia_fake_stupid_v0_1.png",
+        "no_comment": "res://assets/characters/host_lisia_no_comment_v0_1.png"
+      }
+    },
+    "sophia": {
+      "name": "蘇菲亞",
+      "sprite": "res://assets/characters/sophia_story_transparent_v0_1.png",
+      "expressions": {
+        "elegant": "res://assets/characters/sophia_elegant_v0_1.png",
+        "funny_think": "res://assets/characters/sophia_funny_think_v0_1.png",
+        "no_comment": "res://assets/characters/sophia_no_comment_v0_1.png",
+        "please": "res://assets/characters/sophia_please_v0_1.png",
+        "pretend_accept": "res://assets/characters/sophia_pretend_accept_v0_1.png"
+      }
+    },
+    "evis": {
+      "name": "艾維斯",
+      "sprite": "res://assets/characters/evis_story_transparent_v0_1.png"
+    },
+    "tucker": {
+      "name": "塔克",
+      "sprite": "res://assets/characters/tucker_story_transparent_v0_1.png"
+    },
+    "shimmer": {
+      "name": "席默",
+      "sprite": "res://assets/characters/shimmer_story_transparent_v0_1.png"
+    },
+    "rena": {
+      "name": "瑞娜",
+      "sprite": "res://assets/characters/rena_story_transparent_v0_1.png"
+    },
+    "beloit": {
+      "name": "貝洛特",
+      "sprite": "res://assets/characters/beloit_story_transparent_v0_1.png",
+      "expressions": {
+        "calm": "res://assets/characters/beloit_calm_v0_1.png",
+        "cracking": "res://assets/characters/beloit_cracking_v0_1.png",
+        "silent_warning": "res://assets/characters/beloit_silent_warning_v0_1.png"
+      }
+    }
+  },
+  "objectives": [
+    {
+      "id": "obj_01",
+      "text": "接下克雷斯商會的委託"
+    },
+    {
+      "id": "obj_02",
+      "text": "前往展示廳調查，找出行蹤矛盾"
+    },
+    {
+      "id": "obj_03",
+      "text": "確認貝洛特是否有作案機會"
+    },
+    {
+      "id": "obj_04",
+      "text": "確認貝洛特的作案動機"
+    },
+    {
+      "id": "obj_05",
+      "text": "與貝洛特對質，取回設計圖"
+    },
+    {
+      "id": "obj_06",
+      "text": "結案回報，把設計圖交還艾維斯"
+    }
+  ],
+  "excel_stages": [
+    {
+      "stage_id": "stage_countif",
+      "scene_ref": "場景④",
+      "title": "第一關 COUNTIF",
+      "available_functions": [
+        "COUNTIF"
+      ],
+      "objective_text": "找出簽到了、卻沒有離場記錄的人。",
+      "formula_skeleton": "=COUNTIF(表二姓名欄, 表一姓名格)",
+      "fixed_answer_note": "14人結果皆≥1，唯獨「貝洛特」=0。",
+      "success_message": "行蹤記錄出現缺口。一名簽到者，沒有對應的離場記錄。",
+      "unsupported_formula_message": "這份案件暫時不需要該計算方式。請先確認「誰簽了到，卻沒有走出去的記錄」。"
+    },
+    {
+      "stage_id": "stage_countifs",
+      "scene_ref": "場景⑥",
+      "title": "第二關 COUNTIFS",
+      "available_functions": [
+        "COUNTIF",
+        "COUNTIFS"
+      ],
+      "objective_text": "找出在案發空檔，真正有機會接觸設計圖的人。",
+      "formula_skeleton": "=COUNTIFS(姓名欄,姓名,區域欄,\"洽談室\",進入時間欄,\"<=17:30\",離場時間欄,\">=17:30\")",
+      "fixed_answer_note": "僅「貝洛特」＝1（洽談室17:20–17:40，涵蓋案發空檔）；席默全程在展示區，乾淨排除。",
+      "success_message": "機會確認。案發空檔，僅一人同時符合全部條件。",
+      "unsupported_formula_message": "本關需要同時判斷多個條件。請確認「在洽談室、且案發時段在場」的人。"
+    },
+    {
+      "stage_id": "stage_sumif",
+      "scene_ref": "場景⑧",
+      "title": "第三關 SUMIF",
+      "available_functions": [
+        "COUNTIF",
+        "COUNTIFS",
+        "SUMIF"
+      ],
+      "objective_text": "核對貝洛特的費用，找出對不上的數字缺口。",
+      "formula_skeleton": "=SUMIF(類別欄, \"雜項\", 金額欄)",
+      "fixed_answer_note": "雜項實際加總＝1,275；他自己申報只有75；差額1,200來路不明。",
+      "success_message": "動機確認。一筆1,200的金額，存在於明細，卻不在申報之中。委託人存在。",
+      "unsupported_formula_message": "本關需要「按類別加總金額」。請確認貝洛特的「雜項」實際總額。"
+    }
+  ],
+  "dialogue": [
+    {
+      "id": "ch1_0010",
+      "type": "narration",
+      "text": "空氣裡混著金屬氧化與些微陳舊紙張的味道，那是這間事務所獨有的氣息。",
+      "scene_id": "s01",
+      "background": "detective_office",
+      "bgm": "chill_investigate",
+      "bg_zoom": 1.5,
+      "bg_zoom_duration": 8.0,
+      "bg_pos": "center"
+    },
+    {
+      "id": "ch1_0010-2",
+      "type": "narration",
+      "text": "午後的陽光斜斜地穿過窗櫺，在堆滿各式零件的架子上鍍上一層慵懶的金邊。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0010b",
+      "type": "narration",
+      "text": "我盯著記錄本，紙面上乾淨得令人發窘，那是我開業至今一個月的成績。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0020",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "M-047……",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0020",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "(我指尖摩挲著手中那只小銅器，輕輕轉動)",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0020",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "照理說，你應該在整點報時才對。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0030",
+      "type": "narration",
+      "text": "銅器在我手心悶哼了一聲，又陷入沉寂。我撇撇嘴，將它放回架上。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0030-2",
+      "type": "narration",
+      "text": "那裡整齊排列著我多年來蒐集回來的故障器具。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0030-2",
+      "type": "narration",
+      "text": "每一件都貼著我手寫的編號標籤M-001、M-002……。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0030-2",
+      "type": "narration",
+      "text": "標籤的序列爬滿了整面牆，雖多得有些雜亂卻又異常有序。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0030b",
+      "type": "narration",
+      "text": "門鈴清脆地響了一聲，隨即被推開。",
+      "se": "bell",
+      "bgm": "none",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0030c-1",
+      "type": "narration",
+      "text": "風帶進了街道的氣息。",
+      "cg": "cg1",
+      "scene_id": "s01",
+      "scene": "cg",
+      "se": ["door_open", "wind1"],
+      "bg_zoom": 2.0,
+      "bg_zoom_duration": 1.0,
+      "bg_pos": "right"
+    },
+    {
+      "id": "ch1_0030c-2",
+      "type": "narration",
+      "text": "先是一隻手扶著行李箱的把手，指節因為用力而微微泛白。",
+      "bgm": "lycia_and_sophia_warm",
+      "cg": "cg1",
+      "scene_id": "s01",
+      "scene": "cg",
+      "bg_zoom": 1.5,
+      "bg_zoom_duration": 6.0,
+      "bg_pos": "right"
+    },
+    {
+      "id": "ch1_0030c-2",
+      "type": "narration",
+      "text": "接著是另一隻手，端著一個飄著奶香的點心盒，姆指輕輕抵著盒蓋邊緣，像怕它隨著腳步晃出來。",
+      "cg": "cg1",
+      "scene_id": "s01",
+      "scene": "cg",
+      "bg_zoom": 2.0,
+      "bg_zoom_duration": 6.0,
+      "bg_pos": "left"
+    },
+    {
+      "id": "ch1_0040",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "莉莉! 我總算找到這地方了。",
+      "cg": "cg1",
+      "scene_id": "s01",
+      "scene": "cg",
+      "bg_zoom": 1.0,
+      "bg_zoom_duration": 6.0,
+      "bg_pos": "center"
+    },
+    {
+      "id": "ch1_0050",
+      "type": "narration",
+      "text": "我有些怔住，直到那聲音落下，才意識到這不是幻覺。",
+      "cg": "cg1",
+      "scene_id": "s01",
+      "scene": "cg"
+    },
+    {
+      "id": "ch1_0050b",
+      "type": "narration",
+      "text": "蘇菲亞站在門口，大衣下擺沾著一路風塵的痕跡，她拍了拍，目光在屋內迅速掃過一圈。",
+      "cg": "cg1",
+      "scene_id": "s01",
+      "scene": "cg"
+    },
+    {
+      "id": "ch1_0060",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "你這間偵探所，藏得可真深。",
+      "cg": "cg1",
+      "scene_id": "s01",
+      "scene": "cg"
+    },
+    {
+      "id": "ch1_0070",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "蘇菲亞？我放下手中的數據計算儀，站起身，你從首都一路過來的？",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0070-2",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "這離家可有好一段路，你怎麼——",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0080",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "你搬來都一個月了，我卻一次也沒來過。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0080-2",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "(她逕自走到桌前，將點心盒放下，又變戲法似地取出一小包茶葉)說不過去吧。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0090",
+      "type": "narration",
+      "text": "她拆盒蓋上的繩結時，手指動了一下就鬆開了，像那個結原本就不是為了要被解開很久。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0090-2",
+      "type": "narration",
+      "text": "濃郁的香甜味瞬間蓋過了屋裡的銅鏽味。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0100",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "路上特地帶的。我猜你這兒，大概連像樣的茶葉都沒有。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0100-2",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "(她邊說邊張羅著桌上的舊茶具，那雙手很乾淨，落在那堆雜亂零件之間時，顯得有點不像這裡的東西)你啊，又忘記吃飯了吧？",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0110",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "我有吃。我理直氣壯地回應，雖然記憶有些模糊，……前天。",
+      "scene_id": "s01",
+      "expression": "dramatic_cry"
+    },
+    {
+      "id": "ch1_0120",
+      "type": "narration",
+      "text": "蘇菲亞沒接話，只是輕輕嘆了口氣。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0120-2",
+      "type": "narration",
+      "text": "瓷杯碰撞的細碎聲響伴隨著熱水沖下的嘶嘶聲，很快，一縷溫暖的氣息從杯中升起。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0130",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "紅茶，不加糖。(她把杯子往我面前推了推。)",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0140",
+      "type": "narration",
+      "text": "指尖觸到瓷杯的溫熱，那一瞬間，某種被我遺忘的、屬於首都生活的片段突然跳進腦海。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0150",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "……我都搬到這麼遠了，你還記得我喝什麼。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0160",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "(她的視線飄向那些架子上的博物館展品，停了半秒才開口，那半秒比她說出口的話更長)隨便記記而已。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0170",
+      "type": "narration",
+      "text": "她說這句話時，眼睛沒有看我，落在那只不斷漏氣的魔法壓力錶上，嘴角卻在笑。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0170-2",
+      "type": "narration",
+      "text": "我看見她的視線又往下滑了一寸，停在自己提袋的開口邊——那裡露出一角熟悉的本子封皮，她很快又把袋口往上拉了一點。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0180",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "你這裡，活像個博物館。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0190",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "不是博物館，是數據存儲點。我認真地糾正。",
+      "scene_id": "s01",
+      "expression": "fake_serious",
+      "bgm": "funny"
+    },
+    {
+      "id": "ch1_0200",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "對了，克雷斯商會那邊出事了。",
+      "scene_id": "s01",
+      "expression": "elegant"
+    },
+    {
+      "id": "ch1_0200-2",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "(她抬起頭看我，神色轉為幾分認真)前兩天的展示會，有一份魔法器具的設計圖不見了。",
+      "scene_id": "s01",
+      "expression": "elegant"
+    },
+    {
+      "id": "ch1_0200-3",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "艾維斯大人急得不得了，風聲傳得很快，連家裡都聽說了。",
+      "scene_id": "s01",
+      "expression": "elegant"
+    },
+    {
+      "id": "ch1_0210",
+      "type": "narration",
+      "text": "(我的手停在半空。)設計圖？對於發明家來說，這可不僅僅是紙張的價值。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0220",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "魔法器具的？",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0230",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "好像是。聽說是封閉展示會，只請了十幾個人，東西就在眼皮子底下憑空消失——",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0240",
+      "type": "narration",
+      "text": "不需要思考，身體比大腦更早做出反應。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0240-2",
+      "type": "narration",
+      "text": "我已經站了起來，大衣就在椅背上，我順手抓過穿好。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0250",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "我要接。",
+      "objective_update": "obj_01",
+      "scene_id": "s01",
+      "expression": "confidence",
+      "bgm": "charm_detective"
+    },
+    {
+      "id": "ch1_0260",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "……你連委託費都還沒談好。(她看著我，搖了搖頭，但唇角的弧度沒有壓下去。)",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0270",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "委託費可以邊查邊談。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0270-2",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "(我熟練地將數據計算儀扣在腰間)十幾個人、封閉場地、東西憑空消失……蘇菲亞，這種案子，比那點錢有趣多了。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0280",
+      "type": "narration",
+      "text": "她長長地嘆了一口氣，站起身，指尖在領口的位置停了一下，把那條早就好好的領結又重新理了一次。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0290",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "那我帶你去。艾維斯大人……認得我。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0300",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "(我走向門口，回頭看她，心情竟有些久違的雀躍)我就知道找你聊天有用。",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_0310",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "我只是來送點心的。(她小聲咕噥著，腳步卻毫不猶豫地跟了上來。)",
+      "scene_id": "s01"
+    },
+    {
+      "id": "ch1_1010",
+      "type": "narration",
+      "text": "克雷斯商會的會客室瀰漫著薰香氣味，厚重的深木色家具與窗櫺上的銀框，將外頭的喧囂隔絕在外。",
+      "scene_id": "s02",
+      "background": "guild_reception_office",
+      "bgm": "energy_investigate",
+      "bg_zoom": 1.05,
+      "bg_zoom_duration": 12.0,
+      "bg_pos": "right"
+    },
+    {
+      "id": "ch1_1010b",
+      "type": "narration",
+      "text": "艾維斯坐在辦公桌後，昏黃的燈光斜斜落在他臉上那些細密的紋路裡，把每一道都描得很深。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1010b-2",
+      "type": "narration",
+      "text": "他手指無意識地在桌面敲著，每一下都像是敲在某種隱形的鐘擺上。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1020",
+      "type": "dialogue",
+      "speaker_id": "evis",
+      "speaker_name": "艾維斯",
+      "text": "蘇菲亞小姐……他的視線越過點心盒，緩緩落在我的身上，語調拖得很慢，你帶來的這位，是調查顧問？",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1030",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "蘇菲亞上前一步，笑容輕柔而堅定。艾維斯大人，這是莉希雅。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1030-2",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "我們從小一起長大，她解開問題的本事，鎮上沒人比得上。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1040",
+      "type": "narration",
+      "text": "艾維斯沒急著接話，那雙渾濁的眼睛慢慢把我從頭看到腳，停留的時間比看蘇菲亞時長了幾分。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1040-2",
+      "type": "narration",
+      "text": "那種眼神我很熟悉——他並非在看什麼，而是在權衡眼前的對象是否值得他交付重任。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1050",
+      "type": "dialogue",
+      "speaker_id": "evis",
+      "speaker_name": "艾維斯",
+      "text": "調查顧問……他微微俯身，雙手交疊，沒有搜查權，也沒有拘捕權。這點規矩，您清楚吧？",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1060",
+      "type": "narration",
+      "text": "我沒避開他的目光。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1060-2",
+      "type": "narration",
+      "text": "雖然我刻意收斂了儀態，但與生俱來的慣性仍讓我維持著足以應對這種場合的從容。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1070",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "我很清楚。我只負責把事實擺出來。要不要動用騎士團，那是您決定的事。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1080",
+      "type": "narration",
+      "text": "敲擊桌面的節奏倏然停住。艾維斯那雙佈滿皺紋的手僵在半空，隨後緩緩放下。",
+      "effect": "shake",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1090",
+      "type": "dialogue",
+      "speaker_id": "evis",
+      "speaker_name": "艾維斯",
+      "text": "不。他長舒一口氣，胸口的起伏比剛才平了一些，正是不想動用騎士團，才找您。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1090-2",
+      "type": "dialogue",
+      "speaker_id": "evis",
+      "speaker_name": "艾維斯",
+      "text": "展示會是商會的招牌，要是傳出『在我這裡丟了東西還報了官』——往後誰還敢把貨放在克雷斯？",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1100",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "我明白您的意思了。您要的是，在一切變成醜聞之前，安靜地把它找回來。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1110",
+      "type": "narration",
+      "text": "艾維斯緩緩點頭，那雙原本交疊得死緊的手指鬆開了一點，落回桌面時力道也輕了。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1110-2",
+      "type": "narration",
+      "text": "我餘光瞥見蘇菲亞站在一旁，沒有出聲，但有什麼柔軟的東西貼著我手臂那一側，像是她正用自己的方式替這個房間擔保。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1120",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "那我需要兩樣東西。第一，當天的簽到名冊。第二，門口那位先生的記錄本。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1130",
+      "type": "dialogue",
+      "speaker_id": "evis",
+      "speaker_name": "艾維斯",
+      "text": "塔克？艾維斯皺了皺眉，那傢伙記性差得很，凡事都靠寫。您確定？",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1140",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "記性不好但凡事都寫下來——這種證人最好。人會受情緒影響，本子不會替誰說謊。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1150",
+      "type": "narration",
+      "text": "艾維斯沉默片刻，吩咐下屬取來了那兩份文件。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1150-2",
+      "type": "narration",
+      "text": "一份是規整的名冊，另一份則是塔克那本寫得亂七八糟的離場記錄。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1150b",
+      "type": "narration",
+      "text": "我將文件接過，輕輕塞進腰間數據計算儀的感應槽中。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1150b-2",
+      "type": "narration",
+      "text": "淡綠的微光在金屬殼體上游走，發出細微的嗡鳴。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1160",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "好。我先去展示現場走一圈。等回來之後，再讓這台『小東西』算算看。",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1170",
+      "type": "dialogue",
+      "speaker_id": "evis",
+      "speaker_name": "艾維斯",
+      "text": "艾維斯盯著那台發光的機器，視線停在那圈淡綠的光上，半張著嘴沒立刻說話：……您那是什麼器具？",
+      "scene_id": "s02"
+    },
+    {
+      "id": "ch1_1180",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "（理所當然）數據計算儀。我十四歲做的，改了很多版。它不會推理，但它從不算錯。",
+      "scene_id": "s02",
+      "expression": "confidence"
+    },
+    {
+      "id": "ch1_2010",
+      "type": "narration",
+      "text": "展示會已經結束兩天，展示廳還沒完全收拾。",
+      "objective_update": "obj_02",
+      "scene_id": "s03",
+      "bgm": "chill_investigate"
+    },
+    {
+      "id": "ch1_2010b",
+      "type": "narration",
+      "text": "我站在門口，慢慢看了一圈。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2010b-2",
+      "type": "narration",
+      "text": "空蕩蕩的展台、收到一半的布幔，午後的光斜斜切過地板，把灰塵照得像浮在半空。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2020",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "蘇菲亞，你負責跟人聊天；我負責跟東西聊天。各取所長。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2030",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "你把人講得像會頂嘴一樣。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2040",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "人會。東西不會。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2050",
+      "type": "hotspot",
+      "text": "〔走查熱點〕洽談室",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2060",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "（看了看門）設計圖最後就放在這裡的文件袋。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2060-2",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "這是展示會的洽談室——自由交流那段時間，受邀的人本來就能進出，門不會上鎖。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2070",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "這樣放，不是太大意了嗎？",
+      "scene_id": "s03",
+      "expression": "funny_think"
+    },
+    {
+      "id": "ch1_2080",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "對展示會的人來說，這裡本來就該安全。問題是——有人不該被當成『展示會的人』。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2090",
+      "type": "hotspot",
+      "text": "〔走查熱點〕側門",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2100",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "（推了推那扇不起眼的小門）正門有塔克守著。但這裡……一扇側門。出去不會經過門衛。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2100-2",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "也就是說，從這裡走，本子上不會留下任何一筆。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2110",
+      "type": "system",
+      "speaker_name": "調查紀錄",
+      "text": "〔系統〕記下線索：側門為無記錄出口。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2120",
+      "type": "hotspot",
+      "text": "〔走查熱點〕門衛塔克",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2130",
+      "type": "narration",
+      "text": "還沒走近，一個聲音先撞了過來，震得我耳朵有點發麻。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2130-2",
+      "type": "narration",
+      "text": "等我看清人，才發現他比聲音給人的印象還壯實一圈，笑起來眼角擠出一團紋路，那種笑法讓人很難不信他。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2140",
+      "type": "dialogue",
+      "speaker_id": "tucker",
+      "speaker_name": "塔克",
+      "text": "哦——調查顧問！艾維斯大人說過了。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2140-2",
+      "type": "dialogue",
+      "speaker_id": "tucker",
+      "speaker_name": "塔克",
+      "text": "你問，我答，我這人別的不行，記性最差，所以全寫本子上！",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2150",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "那天有沒有人提早走？",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2160",
+      "type": "dialogue",
+      "speaker_id": "tucker",
+      "speaker_name": "塔克",
+      "text": "提早走的有幾個。散場的時候也陸陸續續走得差不多了。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2170",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "你怎麼記的——進場、出場都有嗎？",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2180",
+      "type": "dialogue",
+      "speaker_id": "tucker",
+      "speaker_name": "塔克",
+      "text": "（拍著本子）進出都記！打我這道門過的，沒有一個漏掉。我記性差，但本子不差。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2190",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "那這份記錄，我可以拿去比對名冊？",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2200",
+      "type": "dialogue",
+      "speaker_id": "tucker",
+      "speaker_name": "塔克",
+      "text": "儘管拿。對了，好像有哪位先生散場前就先走了——我也是聽人這麼說，沒記住是哪位。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2200-2",
+      "type": "dialogue",
+      "speaker_id": "tucker",
+      "speaker_name": "塔克",
+      "text": "你要查的話，名冊跟本子一起對就行了。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2210",
+      "type": "narration",
+      "text": "那個時候，我還沒有說任何話，只是把塔克的記錄本，和手上的簽到名冊，一起夾進數據計算儀。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2220",
+      "type": "hotspot",
+      "text": "〔走查熱點〕參展工匠席默",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2230",
+      "type": "narration",
+      "text": "他人很瘦，瘦得有點過頭，說話的速度比正常快了一截，手指一直在袖口邊緣摸來摸去，像是要把那塊布料磨出毛邊才肯停下來。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2240",
+      "type": "dialogue",
+      "speaker_id": "shimmer",
+      "speaker_name": "席默",
+      "text": "你是來查設計圖的？我、我那天全程都在展示區，沒去過洽談室，你問誰都行——",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2250",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "我還沒問你去過哪裡。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2260",
+      "type": "dialogue",
+      "speaker_id": "shimmer",
+      "speaker_name": "席默",
+      "text": "……我只是先說清楚。瑞娜的事，跟我沒關係。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2270",
+      "type": "narration",
+      "text": "他匆匆走開，袖口被他自己捏出了一道摺痕。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2280",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "（小聲）他好緊張。",
+      "scene_id": "s03",
+      "expression": "funny_think"
+    },
+    {
+      "id": "ch1_2290",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "緊張不代表偷東西。但確實——值得記一筆。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2300",
+      "type": "narration",
+      "text": "走查結束。塔克的證詞和兩份名單擺在一起，已經有了第一道矛盾。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2310",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "有人說，有位先生中途就走了——簽到名冊上應該有這個人，離場記錄上卻可能沒有。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_2310-2",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "光憑傳言對不準是誰。交給計算儀，名單一比就知道。",
+      "scene_id": "s03"
+    },
+    {
+      "id": "ch1_3010",
+      "type": "narration",
+      "text": "我打開數據計算儀。畫面亮起兩份名單，右側常駐顯示著本關可用的函數。",
+      "scene_id": "s04",
+      "bgm": "intense_investigate"
+    },
+    {
+      "id": "ch1_3020",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "這就是你那台……它怎麼用？",
+      "scene_id": "s04"
+    },
+    {
+      "id": "ch1_3030",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "我給它一個問題，它幫我把幾百筆資料一次數完。",
+      "scene_id": "s04"
+    },
+    {
+      "id": "ch1_3030-2",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "比方說——『簽到的這個人，在離場記錄裡，到底出現過幾次？』",
+      "scene_id": "s04"
+    },
+    {
+      "id": "ch1_3040",
+      "type": "excel_stage_trigger",
+      "stage_id": "stage_countif",
+      "scene_id": "s04"
+    },
+    {
+      "id": "ch1_3050",
+      "type": "narration",
+      "text": "計算結果定格。除了貝洛特，每個名字旁邊都是1。只有他，是0。",
+      "scene_id": "s04",
+      "effect": "flash"
+    },
+    {
+      "id": "ch1_3060",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "貝洛特。簽到名冊上有他，離場記錄上——沒有他。",
+      "scene_id": "s04",
+      "expression": "confidence"
+    },
+    {
+      "id": "ch1_3070",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "可是……塔克說，有人傳他散場前就先走了。",
+      "scene_id": "s04"
+    },
+    {
+      "id": "ch1_3080",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "有人傳。不是本子上寫了。",
+      "scene_id": "s04"
+    },
+    {
+      "id": "ch1_3090",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "（看向側門的方向）塔克的本子，凡是打正門走的一個不漏——他不在本子上，就是他沒走正門。",
+      "scene_id": "s04"
+    },
+    {
+      "id": "ch1_3090-2",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "而我們剛剛，正好看到一扇不會留記錄的門。",
+      "scene_id": "s04"
+    },
+    {
+      "id": "ch1_3100",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "所以他撒謊了？",
+      "scene_id": "s04"
+    },
+    {
+      "id": "ch1_3110",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "至少，他選了一條不想被看見的路。一個沒做虧心事的人，不會特地挑盲點走。",
+      "scene_id": "s04"
+    },
+    {
+      "id": "ch1_3120",
+      "type": "system",
+      "speaker_name": "調查紀錄",
+      "text": "〔系統〕線索確認：貝洛特・行蹤矛盾。",
+      "effect": "punch_zoom",
+      "scene_id": "s04"
+    },
+    {
+      "id": "ch1_4010",
+      "type": "narration",
+      "text": "光知道貝洛特撒謊還不夠。我要證明，他有機會碰到設計圖。",
+      "scene_id": "s05",
+      "objective_update": "obj_03",
+      "bgm": "energy_investigate"
+    },
+    {
+      "id": "ch1_4020",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "（對艾維斯，透過商會）我需要當天的區域進出記錄——誰、幾點、進了哪個房間。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4030",
+      "type": "dialogue",
+      "speaker_id": "evis",
+      "speaker_name": "艾維斯",
+      "text": "（敲桌）……商會內部都有登記。我讓人調出來。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4040",
+      "type": "system",
+      "speaker_name": "調查紀錄",
+      "text": "〔系統〕已取得資料：表三・區域進出記錄（姓名／區域／進入時間／離場時間）。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4050",
+      "type": "hotspot",
+      "text": "〔走查熱點〕獨立工匠瑞娜",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4060",
+      "type": "narration",
+      "text": "她站在洽談室門口，雙手交握在身前，指節邊緣有一層磨得發亮的厚繭——那種繭只有長年握同一種工具的人才會有。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4060-2",
+      "type": "narration",
+      "text": "我跟她對上視線時，她沒有移開，那種直視讓我想到自己手心裡的那些零件，乾淨、不拐彎。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4070",
+      "type": "dialogue",
+      "speaker_id": "rena",
+      "speaker_name": "瑞娜",
+      "text": "你就是那個調查顧問。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4080",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "設計圖最後是你放回去的？幾點？",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4090",
+      "type": "dialogue",
+      "speaker_id": "rena",
+      "speaker_name": "瑞娜",
+      "text": "（毫不遲疑）十七點十五分。我親手放回洽談室的文件袋，然後去展示區跟人聊了幾句。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4090-2",
+      "type": "dialogue",
+      "speaker_id": "rena",
+      "speaker_name": "瑞娜",
+      "text": "回來的時候——十七點四十五——它就不見了。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4100",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "中間那半小時，洽談室沒人看著。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4110",
+      "type": "dialogue",
+      "speaker_id": "rena",
+      "speaker_name": "瑞娜",
+      "text": "我以為展示會裡的人，不會做這種事。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4120",
+      "type": "narration",
+      "text": "我聽見她這句話的尾音垮了一點，像撐了很久的東西終於洩了氣。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4130",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "（語氣放軟一點）大部分人不會。我只需要找出那個會的人。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4140",
+      "type": "dialogue",
+      "speaker_id": "rena",
+      "speaker_name": "瑞娜",
+      "text": "（看了我一會兒，視線在我臉上停得比剛才久）……名冊我可以給你原本。我花了三年畫那張圖。我要它回來。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4150",
+      "type": "narration",
+      "text": "她說最後一句話的時候，手指不自覺地收緊，那層厚繭壓在指節上，泛出一點微紅。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_4160",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "圖的最後位置十七點十五，失竊發現十七點四十五。我要知道，這段時間誰進過洽談室。",
+      "scene_id": "s05"
+    },
+    {
+      "id": "ch1_5010",
+      "type": "narration",
+      "text": "這一次，問題不只一個條件。",
+      "scene_id": "s06",
+      "bgm": "intense_investigate"
+    },
+    {
+      "id": "ch1_5020",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "上一關我問『有沒有出現』。這一關我要問——『有沒有人，同時符合好幾個條件』。",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_5030",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "好幾個條件？",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_5040",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "在洽談室、案發那段時間在場。少一個都不算。",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_5050",
+      "type": "excel_stage_trigger",
+      "stage_id": "stage_countifs",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_5060",
+      "type": "narration",
+      "text": "計算結果只剩下一個名字亮著。",
+      "effect": "flash",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_5070",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "席默呢？他那麼緊張，我還以為——",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_5080",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "席默全程在展示區。區域對不上，他連『有機會』都談不上。",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_5090",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "緊張的人不一定是犯人。他大概只是……怕別的事。",
+      "scene_id": "s06",
+      "expression": "no_comment"
+    },
+    {
+      "id": "ch1_5100",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "所以——又是貝洛特。",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_5110",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "他撒了謊，而且，他有機會。但我還缺一塊。",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_5120",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "哪一塊？",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_5130",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "（用兩根手指比了個搓錢的動作）為什麼。",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_5130-2",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "名冊上他的身份是『採購商代表』，不是工匠——這張圖他自己用不上，頂多只能轉手。",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_5130-3",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "一個用不上的人，會冒著風險去偷，通常只有一個理由：有人出錢請他偷。",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_5140",
+      "type": "system",
+      "speaker_name": "調查紀錄",
+      "text": "〔系統〕線索確認：貝洛特・有犯案機會。",
+      "effect": "punch_zoom",
+      "scene_id": "s06"
+    },
+    {
+      "id": "ch1_6010",
+      "type": "narration",
+      "text": "走廊上的長窗投下傍晚的橘紅光暈，將地板切成一塊塊深淺不一的影。",
+      "scene_id": "s07",
+      "background": "guild_corridor",
+      "bgm": "sophia_soft"
+    },
+    {
+      "id": "ch1_6010-2",
+      "type": "narration",
+      "text": "艾維斯那邊還在翻閱帳房的費用申報，我和蘇菲亞索性走出來，靠在窗邊等候。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6010b",
+      "type": "narration",
+      "text": "蘇菲亞從口袋裡掏出一本小本子，邊角磨得發白，封皮的顏色已經看不太出本來是什麼色，她指尖輕觸著頁緣，翻開的力道很輕，像是怕翻得太快會把哪一頁折壞。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6020",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "莉莉，我剛剛跟艾維斯大人閒聊了幾句。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6030",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "聊出什麼了？我側頭看著她。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6040",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "我隨口問他——『貝洛特先生是誰請來的呀？看起來不太像本地的採購。』蘇菲亞壓低聲音，眼裡閃過一絲狡黠，他猶豫了一下，才說是維德商行的人，掛名邀請進來的。",
+      "scene_id": "s07",
+      "expression": "pretend_accept"
+    },
+    {
+      "id": "ch1_6050",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "掛名邀請？",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6050-2",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "我低頭沉吟，指尖下意識地敲著窗沿，也就是說，這人不是商會自己想請的，是別人塞進名單的。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6060",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "我把它記下來了。她晃了晃手中的筆記本。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6070",
+      "type": "narration",
+      "text": "我盯著那本舊本子看了幾秒。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6070-2",
+      "type": "narration",
+      "text": "陽光斜斜映在紙頁邊緣，磨損的角落比中間的紙白得多——我猜，那上面密密麻麻寫的，大概都是這些年她替身邊人記下的瑣事。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6080",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "蘇菲亞。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6090",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "嗯？",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6100",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "你這個習慣……我頓了頓，直視她的眼睛，其實很有用。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6110",
+      "type": "narration",
+      "text": "蘇菲亞的動作明顯滯了一下，隨即有些慌亂地啪一聲合上筆記本，假裝若無其事地把它收進口袋，但我沒錯過她嘴角那抹迅速上揚又被強行壓下的弧度。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6120",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "……我只是隨手記記。她別開臉，語氣有些刻意。",
+      "scene_id": "s07",
+      "expression": "please"
+    },
+    {
+      "id": "ch1_6130",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "嗯。隨手記記。我複述了一遍，沒再拆穿她。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6140",
+      "type": "narration",
+      "text": "窗外的光線隨著日落漸漸轉深，投射在長廊上的影也變得晦暗。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6140-2",
+      "type": "narration",
+      "text": "維德商行這個名字第一次在我腦海裡浮現，像是平靜湖面被投下了一顆石子，激起了一圈預料之外的漣漪。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_6140-3",
+      "type": "narration",
+      "text": "這只是第一道漣漪，我預感到了。",
+      "scene_id": "s07"
+    },
+    {
+      "id": "ch1_7010",
+      "type": "narration",
+      "text": "艾維斯那邊的帳房終於把費用申報明細整理好，連同一疊單據一起送了過來。",
+      "objective_update": "obj_04",
+      "scene_id": "s08",
+      "bgm": "intense_investigate"
+    },
+    {
+      "id": "ch1_7020",
+      "type": "dialogue",
+      "speaker_id": "evis",
+      "speaker_name": "艾維斯",
+      "text": "這是這次展示會所有受邀者申報的雜支明細，您要的應該在這裡。",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7030",
+      "type": "system",
+      "speaker_name": "調查紀錄",
+      "text": "〔系統〕已取得資料：表四・費用申報明細（日期／類別／金額）。",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7040",
+      "type": "narration",
+      "text": "我接過那疊紙，邊角還帶著帳房剛核對完的墨水味。",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7050",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "前兩關我數『次數』。這一關，我要算『錢』。",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7060",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "把貝洛特申報的『雜項』全部加起來，看看跟他自己報的數字，對不對得上。",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7070",
+      "type": "excel_stage_trigger",
+      "stage_id": "stage_sumif",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7080",
+      "type": "narration",
+      "text": "數字定格：1,275。申報欄：75。中間，憑空多出一個1,200。",
+      "effect": "flash",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7090",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "一千二……這不是小數目。",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7100",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "對一個『只是來看看』的採購來說，太大了。",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7100-2",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "這筆錢他不敢申報，因為一旦寫上去，就得解釋它從哪來。",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7110",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "掛名邀請、一千二的黑數、案發時段在洽談室、行蹤還撒了謊——（合上計算儀）四條線，都指向同一個人。",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7120",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "我們要報官嗎？",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7130",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "艾維斯大人不想鬧大。而且——我手上全是『間接』證據。",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7130-2",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "我能證明他撒謊、有機會、收了錢，但我不能證明圖『現在』在他房間。所以我不去抓他。",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7130-3",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "我去——讓他自己交出來。",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7140",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "怎麼讓？",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7150",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "（看了蘇菲亞一眼，笑）這部分，要靠你。",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7160",
+      "type": "system",
+      "speaker_name": "調查紀錄",
+      "text": "〔系統〕線索確認：貝洛特・有犯案動機（未申報委託費1,200）。",
+      "effect": "punch_zoom",
+      "scene_id": "s08"
+    },
+    {
+      "id": "ch1_7170",
+      "type": "system",
+      "speaker_name": "調查紀錄",
+      "text": "〔系統〕四項線索齊備：行蹤撒謊＋有機會＋有人指使＋收了錢 → 進入對質。",
+      "objective_update": "obj_05",
+      "effect": "punch_zoom",
+      "scene_id": "s08",
+      "scene": "cg",
+      "cg": "cg2",
+      "bgm": "emotional_1"
+    },
+    {
+      "id": "ch1_8010",
+      "type": "narration",
+      "text": "我跟蘇菲亞先分好位置。",
+      "scene_id": "s09",
+      "background": "hotel_tea_room",
+      "bg_zoom": 1.06,
+      "bg_zoom_duration": 14.0,
+      "bg_pos": "left"
+    },
+    {
+      "id": "ch1_8010-2",
+      "type": "narration",
+      "text": "她先過去，我留在角落那張舖著淺色桌布的小桌，端著一杯沒什麼興趣喝的茶，眼睛卻一刻沒離開她那邊。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8020",
+      "type": "narration",
+      "text": "蘇菲亞走過去的步伐很輕，輕得像在自己家的客廳裡走動。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8020-2",
+      "type": "narration",
+      "text": "她在貝洛特對面坐下，姿態端正得不像是要查什麼人，倒像只是恰巧路過，想坐下喝杯茶。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8020b",
+      "type": "narration",
+      "text": "我看著貝洛特那雙撐在桌沿的手——指甲修得很乾淨，骨節卻因為某種我說不出名字的緊繃微微泛白。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8020b-2",
+      "type": "narration",
+      "text": "他笑得很得體，那種得體像一層上過漆的木頭，光滑，卻摸不出底下的紋路。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8030",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "貝洛特先生？冒昧打擾。",
+      "scene_id": "s09",
+      "expression": "elegant"
+    },
+    {
+      "id": "ch1_8030-2",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "我父親跟維德商行有些業務往來，聽說您是他們的合作夥伴，想來打個招呼。",
+      "scene_id": "s09",
+      "expression": "elegant"
+    },
+    {
+      "id": "ch1_8040",
+      "type": "dialogue",
+      "speaker_id": "beloit",
+      "speaker_name": "貝洛特",
+      "text": "（起身，禮貌）哪裡哪裡，小姐太客氣。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8050",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "她的聲音輕輕落下，像隨手放下一只茶杯，不疾不徐：對了，聽說這次展示會出了點事？",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8050-2",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "設計圖不見了，是真的嗎？艾維斯大人看起來很頭痛呢。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8060",
+      "type": "dialogue",
+      "speaker_id": "beloit",
+      "speaker_name": "貝洛特",
+      "text": "貝洛特只是笑了一下，那笑落得比剛才更淺，幾乎沒有停頓：哦，是嗎。這種事……難免的。",
+      "scene_id": "s09",
+      "expression": "calm"
+    },
+    {
+      "id": "ch1_8070",
+      "type": "narration",
+      "text": "我盯著他那張臉。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8070-2",
+      "type": "narration",
+      "text": "如果是我聽說熟人辦的活動出了竊案，我會皺眉、會多問一句嚴重嗎、會下意識往四周看一眼——可他什麼都沒有。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8070-3",
+      "type": "narration",
+      "text": "他的反應比一杯放在桌上太久的茶還要平。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8080",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "蘇菲亞起身的時候，笑容沒有掉下來一分。也是。那不打擾您了。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8090",
+      "type": "narration",
+      "text": "她走回我這邊時，腳步比剛才稍微快了一點，那點快被她裙擺的弧度藏得很好，只有我看得出來。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8100",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "她坐下，端起杯子抿了一口，聲音壓得極低：他聽到『不見了』的時候，眼睛動都沒動一下。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8110",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "正常人聽到熟人出事，眼睛會動。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8120",
+      "type": "narration",
+      "text": "我把外套領口又拉正了一點，端著一副尋常採購商的從容，走向他那張桌子。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8130",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "貝洛特先生是吧？聽說這次展示會上，有一份很有意思的傳音器具設計圖。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8130-2",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "我想找人詢個價。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8140",
+      "type": "dialogue",
+      "speaker_id": "beloit",
+      "speaker_name": "貝洛特",
+      "text": "他抬眼看我，那目光在我臉上停了半秒，像在估算什麼東西的重量。……小姐消息很靈通。",
+      "scene_id": "s09",
+      "expression": "calm"
+    },
+    {
+      "id": "ch1_8150",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "聽說已經有人先拿到手了。我想問——還有沒有機會？",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8160",
+      "type": "narration",
+      "text": "他沒說有，也沒說沒有。他的手指在桌面上輕輕敲了兩下，停住，才慢慢開口：您是……從哪裡聽說的？",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8180",
+      "type": "narration",
+      "text": "那一瞬間，我幾乎想笑。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8180-2",
+      "type": "narration",
+      "text": "一個真的不知道圖在哪裡的人，不會在意我從哪裡聽說——他會直接說我不清楚這件事。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8180-3",
+      "type": "narration",
+      "text": "可他問的是我的消息來源，這代表他心裡已經有了一張圖的位置，只是不確定我是不是該知道的人。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8190",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "（心裡）你這句話一問出口，就已經承認了。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8200",
+      "type": "narration",
+      "text": "我還沒來得及回答，蘇菲亞已經端著杯子走過來，自然地坐到我身邊，像是想起了什麼事，順手就坐下了。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8210",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "貝洛特先生，抱歉，我忘了一件事想問。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8220",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "她的語氣輕得像在閒話家常，連坐姿都沒變，只是手指在裙擺上不著痕跡地理了理：我剛想起來——我父親上個月跟維德商行的人吃飯，好像提到過您的名字，說您最近接了一個『很特別的委託』。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8230",
+      "type": "narration",
+      "text": "我看著貝洛特的臉。",
+      "scene_id": "s09",
+      "effect": "shake"
+    },
+    {
+      "id": "ch1_8230-2",
+      "type": "narration",
+      "text": "那層上過漆的得體，第一次裂開了一道縫——不是慌張，是那種被人輕輕踩到尾巴時，連自己都還沒反應過來的僵。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8230-3",
+      "type": "narration",
+      "text": "他坐在那裡，卻像整個人往椅子裡縮了一寸。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8230b",
+      "type": "narration",
+      "text": "他面對的已經不是一個查案子的調查顧問了。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8230b-2",
+      "type": "narration",
+      "text": "是一個家族跟維德商行有來往、又認得艾維斯的貴族小姐，坐在他面前，笑著說出一句閒話般的話。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8230c",
+      "type": "narration",
+      "text": "我把資料一份一份攤在桌上，動作不快，卻每一份都落得很穩。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8240",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "行蹤——簽到名冊有您，離場記錄沒有您，您卻說自己中途走了。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8250",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "機會——案發那半小時，洽談室裡只有您一個人符合全部條件。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8260",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "金錢——您有一筆一千二的雜項，沒有申報。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8270",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "設計圖，在您的房間。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8280",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "（不疾不徐）我們可以現在就去找艾維斯大人，讓他決定要不要請騎士團來處理——",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8290",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "或者，您現在把圖交給我，這件事就到這裡為止。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8290-2",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "不會有人知道，『維德商行』這個名字，曾經出現在這宗案件裡。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8300",
+      "type": "narration",
+      "text": "他沉默了很久，久到我聽見茶室角落那座老座鐘走了好幾格。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8310",
+      "type": "dialogue",
+      "speaker_id": "beloit",
+      "speaker_name": "貝洛特",
+      "text": "他站起來，聲音比剛才低了一截：……請稍等。",
+      "scene_id": "s09",
+      "expression": "cracking"
+    },
+    {
+      "id": "ch1_8320",
+      "type": "narration",
+      "text": "他往樓上走的時候，背影比剛進來時窄了一圈。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8330",
+      "type": "narration",
+      "text": "五分鐘後，他下來，手裡拿著一捲紙，放在桌上時動作很輕，輕得不像是要交出什麼重要的東西。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8330b",
+      "type": "narration",
+      "text": "他看了我一眼。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8330b-2",
+      "type": "narration",
+      "text": "那眼神不再有剛才的圓滑，只剩下一種被人拆穿之後，還想留住點什麼的執拗。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8340",
+      "type": "dialogue",
+      "speaker_id": "beloit",
+      "speaker_name": "貝洛特",
+      "text": "小姐。維德商行的人，不是好打交道的。",
+      "scene_id": "s09",
+      "expression": "silent_warning"
+    },
+    {
+      "id": "ch1_8350",
+      "type": "dialogue",
+      "speaker_id": "beloit",
+      "speaker_name": "貝洛特",
+      "text": "他停了一下，像在斟酌每個字該放多重：您最好想清楚——有些事，知道了，就很難再裝作不知道。",
+      "scene_id": "s09",
+      "expression": "silent_warning"
+    },
+    {
+      "id": "ch1_8360",
+      "type": "narration",
+      "text": "他轉身離開，沒有再說話。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_8360-2",
+      "type": "narration",
+      "text": "那句話像一根細針，輕輕扎進我心裡某個我自己都還沒注意到的地方。",
+      "scene_id": "s09"
+    },
+    {
+      "id": "ch1_9010",
+      "type": "narration",
+      "text": "走出旅館，風比白天涼了不少。我沉默地走了幾步，才開口。",
+      "scene_id": "s09b",
+      "scene": "cg",
+      "cg": "cg3_wide",
+      "background": "hotel_exterior_street",
+      "bgm": "touching"
+    },
+    {
+      "id": "ch1_9020",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "你剛才那句——你父親跟維德商行吃飯——是真的嗎？",
+      "scene_id": "s09b"
+    },
+    {
+      "id": "ch1_9030",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "是真的。只是我父親不記得，有提到他的名字。",
+      "scene_id": "s09b"
+    },
+    {
+      "id": "ch1_9040",
+      "type": "narration",
+      "text": "……",
+      "scene_id": "s09b"
+    },
+    {
+      "id": "ch1_9050",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "她側過頭看我，神色坦然得像在說今天天氣不錯：我沒有說謊。我只是，沒有說完整。",
+      "scene_id": "s09b",
+      "expression": "pretend_accept"
+    },
+    {
+      "id": "ch1_9060",
+      "type": "narration",
+      "text": "我看著她。",
+      "scene_id": "s09b"
+    },
+    {
+      "id": "ch1_9060-2",
+      "type": "narration",
+      "text": "夕陽斜斜打在她臉側，把她平時那種端莊的輪廓鍵得柔軟了一點，卻一點也不顯得脆弱。",
+      "scene_id": "s09b"
+    },
+    {
+      "id": "ch1_9070",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "你知道嗎。我覺得你比我想像的，要適合做這行。",
+      "scene_id": "s09b"
+    },
+    {
+      "id": "ch1_9080",
+      "type": "narration",
+      "text": "她沒有回答我。她從口袋裡拿出那本邊角磨得發白的筆記本，翻開，落筆寫了一行字。",
+      "scene_id": "s09b"
+    },
+    {
+      "id": "ch1_9090",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "你又在記什麼？",
+      "scene_id": "s09b"
+    },
+    {
+      "id": "ch1_9100",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "莉莉說謊的時候，眼睛會往左看。",
+      "scene_id": "s09b",
+      "expression": "funny_think"
+    },
+    {
+      "id": "ch1_9110",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "我沒有說謊。",
+      "scene_id": "s09b",
+      "expression": "fake_stupid"
+    },
+    {
+      "id": "ch1_9120",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "她一邊寫，一邊笑了一下，那笑藏在低垂的眼睫底下，沒讓我看全：我知道。我在記，你『不說謊』的時候是什麼樣子。",
+      "scene_id": "s09b",
+      "scene": "cg",
+      "cg": "cg3_closeup",
+      "bgm": "emotional_2"
+    },
+    {
+      "id": "ch1_10010",
+      "type": "narration",
+      "text": "夜色已深，事務所內只剩下桌上一盞檯燈，將我們與窗外的黑暗隔開。",
+      "objective_update": "obj_06",
+      "scene_id": "s10",
+      "background": "detective_office",
+      "bgm": "finish_case"
+    },
+    {
+      "id": "ch1_10020",
+      "type": "narration",
+      "text": "設計圖物歸原主。",
+      "scene_id": "s10",
+      "bgm": "sad"
+    },
+    {
+      "id": "ch1_10020-2",
+      "type": "narration",
+      "text": "瑞娜抱著那捲紙，指節用力得發白，她什麼也沒說，只是在臨走前別過臉，聲音微顫：……我畫了三年。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10040",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "我知道。我回應得很輕，那是對同為創作者的尊重。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10050",
+      "type": "dialogue",
+      "speaker_id": "rena",
+      "speaker_name": "瑞娜",
+      "text": "下次……我不會再犯這種錯了。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10060",
+      "type": "narration",
+      "text": "她關上門，那串沉重的腳步聲遠去，在長廊的盡頭消失。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10060-2",
+      "type": "narration",
+      "text": "隨後，艾維斯放下了一疊厚實的委託費，沒多說什麼，行了個禮便離開了。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10060b",
+      "type": "narration",
+      "text": "室內恢復了寧靜，只有我數鈔票時，那種清脆的紙張摩擦聲在迴盪。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10070",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "三、四、五。我一張張理得整齊，心跳比平時快了些。",
+      "scene_id": "s10",
+      "scene": "cg",
+      "cg": "cg4",
+      "bgm": "funny"
+    },
+    {
+      "id": "ch1_10080",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "你就不能假裝，不那麼在乎錢嗎？蘇菲亞支著下巴，有些好笑地看著我。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10090",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "我沒抬頭，繼續確認著最後幾張的平整度，不行。這是第一筆。要記住這個手感。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10100",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "……真有你的。",
+      "scene_id": "s10",
+      "expression": "no_comment"
+    },
+    {
+      "id": "ch1_10100-2",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "蘇菲亞輕聲咕噥，目光從那些貼著M標籤的舊器具掃過，最終停留在這間充滿我個人氣息、略顯混亂的房間裡。",
+      "scene_id": "s10",
+      "expression": "no_comment"
+    },
+    {
+      "id": "ch1_10110",
+      "type": "narration",
+      "text": "窗外的風微微拂動窗簾，這間經營了一個月卻始終清冷的事務所，直到現在才彷彿有了活氣。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10120",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "莉莉。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10130",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "嗯？",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10140",
+      "type": "dialogue",
+      "speaker_id": "sophia",
+      "speaker_name": "蘇菲亞",
+      "text": "我想……留下來幫忙。",
+      "scene_id": "s10",
+      "expression": "please",
+      "bgm": "lycia_and_sophia_warm"
+    },
+    {
+      "id": "ch1_10150",
+      "type": "narration",
+      "text": "她說得很平淡，像是在討論晚餐吃什麼，但那雙筆直注視著我的眼睛卻藏不住認真。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10150-2",
+      "type": "narration",
+      "text": "她將筆記本翻到了新的一頁，筆尖懸在上方，像是在等待什麼指令，又像是在等待一個肯定的答案。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10150b",
+      "type": "narration",
+      "text": "我把那疊鈔票擱進抽屜，回過頭，目光與她交會。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10150b-2",
+      "type": "narration",
+      "text": "那份無名的人情債，或是青梅竹馬間的慣性，在這一刻似乎都已經不重要了。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10150c",
+      "type": "narration",
+      "text": "莉莉轉身整理資料，隨手將一張整理好的記錄表推向對面。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10160",
+      "type": "dialogue",
+      "speaker_id": "host",
+      "speaker_name": "莉希雅",
+      "text": "……如果是『幫忙』的話，這疊資料，從右邊開始分類。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10170",
+      "type": "narration",
+      "text": "蘇菲亞看著那疊資料，嘴角綻開一抹笑，拿起筆開始工作。",
+      "scene_id": "s10"
+    },
+    {
+      "id": "ch1_10170b",
+      "type": "narration",
+      "text": "夜色深沉，但這間只有兩人的辦公室，終於不再安靜得讓人心慌。",
+      "scene_id": "s10"
+    }
+  ],
+  "backgrounds": {
+    "detective_office": "res://assets/backgrounds/bg_detective_office.png",
+    "guild_reception_office": "res://assets/backgrounds/bg_guild_reception_office.png",
+    "guild_corridor": "res://assets/backgrounds/bg_guild_corridor.png",
+    "hotel_tea_room": "res://assets/backgrounds/bg_hotel_tea_room.png",
+    "hotel_exterior_street": "res://assets/backgrounds/bg_hotel_exterior_street.png"
+  },
+  "cg_images": {
+    "cg1": "res://assets/cg/cg_01_sophia_arrival.png",
+    "cg2": "res://assets/cg/cg_02_chess_decision.png",
+    "cg3_wide": "res://assets/cg/cg_03_street_wide.png",
+    "cg3_closeup": "res://assets/cg/cg_03_street_closeup.png",
+    "cg4": "res://assets/cg/cg_04_counting_money.png"
+  },
+  "bgm_tracks": {
+    "lycia_soft": "res://assets/bgm/bgm_lycia_soft.mp3",
+    "sophia_soft": "res://assets/bgm/bgm_sophia_soft.mp3",
+    "lycia_and_sophia_warm": "res://assets/bgm/bgm_lycia_and_sophia_warm.mp3",
+    "charm_detective": "res://assets/bgm/bgm_charm_detective.mp3",
+    "chill_investigate": "res://assets/bgm/bgm_chill_investigate.mp3",
+    "energy_investigate": "res://assets/bgm/bgm_energy_investigate.mp3",
+    "intense_investigate": "res://assets/bgm/bgm_intense_investigate.mp3",
+    "emotional_1": "res://assets/bgm/bgm_emotional_1.mp3",
+    "emotional_2": "res://assets/bgm/bgm_emotional_2.mp3",
+    "touching": "res://assets/bgm/bgm_touching.mp3",
+    "finish_case": "res://assets/bgm/bgm_finish_case.mp3",
+    "sad": "res://assets/bgm/bgm_sad.mp3",
+    "funny": "res://assets/bgm/bgm_funny.mp3",
+    "town": "res://assets/bgm/bgm_town.mp3",
+    "theme_song_noble": "res://assets/bgm/bgm_theme_song_noble.mp3",
+    "theme_song_high_energy": "res://assets/bgm/bgm_theme_song_high_energy.mp3"
+  }
+}

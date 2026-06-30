@@ -1,0 +1,28 @@
+[gd_scene load_steps=3 format=3 uid="uid://b08fxtest"]
+
+[ext_resource type="Script" path="res://08_dialogue_effects_test.gd" id="1"]
+[ext_resource type="PackedScene" path="res://08_dialogue_effects.tscn" id="2"]
+
+[node name="DialogueEffectsTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="BgTestRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.16, 0.2, 0.18, 1)
+
+[node name="TargetBox" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 400.0
+offset_top = 220.0
+offset_right = 520.0
+offset_bottom = 340.0
+
+[node name="DialogueEffects" parent="." instance=ExtResource("2")]
+layout_mode = 1

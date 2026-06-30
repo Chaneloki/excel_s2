@@ -183,9 +183,12 @@ v2專案本身**不受影響、不會被修改**，s2是獨立的新專案。
   「每次玩都不太一樣」的真實資料庫感。
 - **生成時機**：**新遊戲開始時生成一次，存檔後固定**——同一個存檔裡
   資料不會變動，避免玩家中途離開解謎器再回來時搞混。
-- **陷阱/干擾項**（視覺相似但邏輯無關的假線索）：
-  - **案件1：不要陷阱**（教學向，先讓玩家熟悉怎麼打公式）。
-  - **之後案件**：逐步加入陷阱，難度遞增，跟主角陸續加入同步。
+- **Excel資料的陷阱/干擾項**（視覺相似但邏輯無關的假資料）：
+  - **案件1的Excel表格：不要陷阱**（教學向，先讓玩家熟悉怎麼打公式）。
+  - **之後案件的Excel表格**：逐步加入陷阱，難度遞增，跟主角陸續加入同步。
+  - 這項限制**不適用於地圖探索／Detective Mode**；案件1的場景可以有
+    紅鯡魚、裝飾性觀察與可排除的無關線索，讓玩家練習篩選資訊，但不可
+    改動Excel教學表格內指向固定答案的乾淨資料。
 
 ---
 
@@ -230,21 +233,23 @@ cyberpunk全息、華麗魔法少女、普通RPG道具欄。
 | 零件 | 狀態 | 說明 |
 |---|---|---|
 | 美術/UI風格指南 | ✅ 已定稿v0.1 | 見 [0mockup](0mockup)，6大畫面mockup + UI/角色風格規則文件 |
-| Excel解謎器 - COUNTIF原型 | ✅ Mockup精準重建完成（第1、2批素材，第3批決定不做） | `01_excel_simulator_step1_countif.*`，見 [2godot_project](2godot_project)，公式邏輯/選取/拖曳填滿已驗證可動；視覺已依`excel_solver_ui_mockup.png`重建頂部列、左側面板、公式列、右側案件目標/公式提示框。原規劃第3批（六個公式圖示＋底部提示框/徽章）已決定不做，目前底部系統提示列維持原本純色細邊框占位樣式，公式提示清單維持純文字，不影響功能 |
+| Excel解謎器 - COUNTIF原型 | ✅ Mockup精準重建完成（第1、2批素材，第3批決定不做） | `01_excel_simulator_step1_countif.*`，見 [2godot_project](2godot_project)，公式邏輯/選取/拖曳填滿已驗證可動；視覺已依`excel_solver_ui_mockup.png`重建頂部列、左側面板、公式列、右側案件目標/公式提示框。原規劃第3批（六個公式圖示＋底部提示框/徽章）已決定不做，目前底部系統提示列維持原本純色細邊框占位樣式，公式提示清單維持純文字，不影響功能。公式編輯「指向模式」（點格子把參照插進公式）已擴充支援拖曳：拖過多格會即時插入"A2:B5"範圍參照並隨拖曳更新，不只能插入單一儲存格 |
 | UI運行時調校工具（debug用，非正式遊戲零件） | ✅ 已完成 | `05_ui_tweaker_tool.*`，見 [2godot_project](2godot_project)，可即時調整任何Control節點Position/Size/Scale並複製參數，用於輔助校正Vibe Coding寫死的座標數值 |
-| Story Dialogue UI 零件 | 🔶 v0.1進行中 | `02_story_dialogue_ui_demo.*`，規格見 story_dialogue_ui_component_spec_v0.1.md，目前是暫時單檔prototype，之後拆成DialogueBox/NamePlate/CharacterSpriteLayer等子零件 |
+| Story Dialogue UI 零件 | 🔶 v0.1進行中 | `02_story_dialogue_ui_demo.*`，規格見 story_dialogue_ui_component_spec_v0.1.md，目前是暫時單檔prototype，之後拆成DialogueBox/NamePlate/CharacterSpriteLayer等子零件。設定彈窗已補上真正可切換的「顯示與輔助」分頁（原本切換按鈕從沒被接上），新增文字速度／自動播放速度滑桿並接上實際的打字機/自動播放間隔，分頁按鈕外觀也從借用素材拉伸變形改成低調矩形+銀框風格 |
 | Excel解謎器 - SUMIF/SUMIFS | ✅ 已完成 | 沿用COUNTIF的`_parse_xxx`/`_evaluate_xxx`模式擴充進`01_excel_simulator_step1_countif.gd`，跟COUNTIF/COUNTIFS共用同一套範圍/條件解析，不綁定特定問題的特定答案 |
 | Excel解謎器 - VLOOKUP / INDEX+MATCH / 日期 / 文本函數 | ⏳ 未開始 | 沿用COUNTIF的`_parse_xxx`/`_evaluate_xxx`模式逐個擴充 |
 | 地圖走查系統 - 2D熱點原型 | ✅ 已完成 | `03_map_walker_hotspot_demo.*`，見 [2godot_project](2godot_project)，純2D環境插畫+熱點彈出特寫卡機制已驗證可動，內容為占位文字，尚未串接案件1真實熱點/特寫卡素材 |
+| 新Detective Mode（固定第一人稱2.5D） | 🔶 第10號零件完成 | 取代舊地圖走查的正式方向：固定Camera、小範圍上下左右觀看、2D分層視差、可在Godot 2D編輯器拖拉物件與CollisionPolygon2D。案件一系統任務、未來章節重用結構及D1／D2／D3拆件清單見[3case/case1_detective_mode_task_and_element_list_v0.1.md](3case/case1_detective_mode_task_and_element_list_v0.1.md)。`10_investigation_state.gd`純狀態核心及獨立測試已完成，Godot 4.6.3共23項通過；尚未接入Story、Excel或2.5D場景。下一個零件是11號固定POV Camera，需另行確認後才開始。 |
 | Save/Load UI | 🔶 存讀檔邏輯已真正可動，獨立UI場景未開始 | 新增`06_save_system.gd`（`SaveSystem`），把存讀檔從「只有版面、不寫資料」升級成真的寫進`user://saves/`的JSON檔；目前接在`02_story_dialogue_ui_demo.gd`既有的存讀檔彈窗上（沿用其mockup版面），可保存/讀取目前對白進度跟案件目標完成狀態。仍待做：獨立的Save/Load UI場景（從主選單直接進入，不依附Story Dialogue UI）、存檔資料隨案件資料結構擴充更多欄位。畫面規則見ui_style_guide第9節 |
-| Settings UI | ⏳ 未開始 | 畫面規則見ui_style_guide第10節 |
-| 案件資料結構（JSON/資料檔，跟UI解耦） | ⏳ 未開始 | 純資料，方便之後換案件不用動程式邏輯。需求補充（2026-06-29，來自Excel解謎器COUNTIF原型開發時發現）：Excel解謎器右側「案件目標」「公式提示」框、頂部「第1章：第一份委託」章節牌文字，目前都是COUNTIF原型demo內寫死的占位資料，但實際上每一章節教學內容/可用函數/章節名稱/案件目標都不同，這份資料結構要包含「每章節名稱」「每章節可用函數清單」「每章節案件目標清單」，COUNTIF原型之後要改成讀這份資料顯示，不是自己內部硬寫。需求補充（2026-06-29，來自Story Dialogue UI demo開發時發現）：Story Dialogue UI的「案件目標」面板、對白內容（`DIALOGUE_LINES`）、每句話顯示哪個角色立繪/姓名牌文字，目前同樣是`02_story_dialogue_ui_demo.gd`內寫死的占位資料，但實際上每個章節/案件的劇本、案件目標、出場角色都不同——這份資料結構也要包含「每章節對白腳本（含每句的speaker_id/姓名/文字/類型）」「每章節登場角色立繪對照」，Story Dialogue UI之後要改成讀這份資料顯示，不是自己內部硬寫。換句話說，這個零件做出來時，至少要同時滿足Excel解謎器跟Story Dialogue UI兩邊demo已經發現的需求 |
+| Settings UI | 🔶 部分設定已真正可動，獨立UI場景未開始 | BGM/音效音量、文字速度、自動播放速度目前接在`02_story_dialogue_ui_demo.gd`既有的設定彈窗上（沿用其mockup版面），調整滑桿會直接改變實際播放行為，不是只有畫面數值。仍待做：獨立的Settings UI場景、對白框透明度/全螢幕/解析度/動畫特效/解謎輔助類設定（ui_style_guide第10節其餘項目）。畫面規則見ui_style_guide第10節 |
+| 劇情特效（shake/flash/punch zoom/黑屏轉場/立繪淡入淡出） | ✅ 已完成（shake/flash/punch zoom已接回案件一） | `2godot_project/08_dialogue_effects.gd`/`.tscn`（`DialogueEffects`，可掛載工具節點），提供五個效果，獨立測試見`08_dialogue_effects_test.*`。`02_story_dialogue_ui_demo.gd`已接上：`case_01.json`對白資料新增可省略的`"effect"`欄位（`shake`/`flash`/`punch_zoom`），COUNTIF/COUNTIFS/SUMIF三關答案定格用`flash`、〔系統〕線索確認訊息用`punch_zoom`、艾維斯/貝洛特情緒衝擊瞬間用`shake`；角色立繪顯示/隱藏也從瞬間切換改成淡入淡出。黑屏轉場跟背景淡入淡出引擎已具備，但案件一對白資料目前沒有「每句指定背景」可以接，留給之後多背景需求時使用 |
+| 案件資料結構（JSON/資料檔，跟UI解耦） | ✅ 已完成（案件一，含背景/CG/表情差分） | `07_case_data.gd`（`CaseData`）讀`2godot_project/data/cases/case_01.json`，內容是案件一《缺席者的名字》完整資料：章節名稱、全部對白腳本（已對照[3case/case1_script_draft_v0.1.md](3case/case1_script_draft_v0.1.md)逐場景轉換）、案件目標清單、Excel解謎器三關（COUNTIF/COUNTIFS/SUMIF）設定、**場景背景對照（5張，來自`3case/case1_bg/`）、CG插畫對照（5張，來自`3case/case1_cg/`）、角色立繪＋表情差分對照（host/sophia/貝洛特，來自`1char/host_face/`、`1char/sophia_face/`、`1char/case1_npc/belot/`）**。`02_story_dialogue_ui_demo.gd`已接上：對白資料新增可省略的`"background"`/`"cg"`/`"expression"`欄位，背景切換包黑屏轉場、CG插畫真正顯示、角色表情依劇本情緒轉折切換。`01_excel_simulator_step1_countif.gd`的章節牌/案件目標也讀同一份資料。修正過程中發現並修正一個欄位命名撞名bug（場景分組標籤跟CG模式判斷都叫`"scene"`，導致CG模式從未被觸發，已拆成`"scene_id"`/`"scene"`兩個欄位）。Excel解謎器實際運算用的儲存格資料不在這份資料結構內，留給Excel解謎器零件自己的資料生成邏輯。獨立測試見`07_case_data_test.gd`/`.tscn`，規格見[2godot_project/data/cases/readme.md](2godot_project/data/cases/readme.md) |
 | 收藏清單UI（呼應莉莉M-001、M-002…故障器具收藏癖） | ⏳ 未開始，待排入 | 地圖走查熱點之後會分「關鍵線索／純風味／收藏品」三種類型，收藏品熱點目前先只彈簡單提示（例如「已收藏：M-0XX」），完整的收藏清單畫面（瀏覽已收集器具、編號管理）是獨立零件，先排入待辦，不跟地圖走查原型混著做 |
-| 第一章故事劇本 | ⏳ 未開始 | **先完成劇本，才開始做整合Demo** |
-| 整合Demo（案件1） | ⏳ 待第一章故事完成 + 各零件完成後才開始 | 把以上零件組裝成第一個可玩案件，流程見story_dialogue_ui_component_spec第12節 |
+| 第一章故事劇本 | ✅ v1.0完成 | [3case/case1_script_draft_v0.1.md](3case/case1_script_draft_v0.1.md)《缺席者的名字》，全10個場景逐句敘事文字劇本＋附錄A（Excel三關速查：COUNTIF/COUNTIFS/SUMIF，固定答案與系統提示語）／附錄B（伏筆清單）／附錄C（對齊世界觀/角色設定/強規則的檢查記錄，含確認全程未提及轉世）。尚未轉換成Story Dialogue UI對白資料格式（id/type/speaker/text...），轉換時程取決於「案件資料結構」零件 |
+| 整合Demo（案件1） | 🔶 第一版完成（文字劇本＋Excel三關可玩通，Map Walker未接） | `2godot_project/09_chapter1_dialogue.gd`/`.tscn`（複製自02，02本體未改動）為主場景，案件一s01~s10b全劇本可從頭玩到尾；劇情走到COUNTIF/COUNTIFS/SUMIF三關時真的切換成可互動的數據計算儀（`09_chapter1_excel_solver.gd`/`.tscn`，複製自01，01本體未改動，換上案件一真實資料＋答對判定`puzzle_solved`訊號），答對才送回劇情繼續播。**故意縮小的範圍**：劇本場景③⑤（地圖走查）這次仍維持文字播放，沒有切換成Map Walker的可點擊地圖畫面——把這些對話改造成真正地圖熱點互動是另一塊工程量相當的整合任務，留作下一步 |
 
 ### 開發順序原則
-1. ~~先寫第一章劇情劇本~~ → 美術風格指南已先行定稿（v0.1），劇本仍待補。
+1. ~~先寫第一章劇情劇本~~ → 美術風格指南已先行定稿（v0.1），第一章劇本（案件一《缺席者的名字》）已完成v1.0。
 2. 各零件依上表**逐一**獨立開發、獨立測試，每個零件做完先用demo驗證。
 3. **所有零件完成 + 第一章故事完成後**，才整合成Demo——不提前整合。
 
@@ -280,8 +285,9 @@ cyberpunk全息、華麗魔法少女、普通RPG道具欄。
     鎖定；破案關鍵資料永遠固定不變，不可隨機。
 11. **Excel解謎器不支援的公式**：必須用劇情/偵探系統語氣提示玩家拉回
     主線，不可顯示技術性錯誤訊息或讓遊戲卡死。
-12. **案件難度曲線**：陷阱/干擾項從案件1的「無陷阱」開始，之後逐步
-    遞增，不可一開始就太刁鑽。
+12. **Excel案件難度曲線**：Excel表格內的陷阱/干擾資料從案件1的
+    「無陷阱」開始，之後逐步遞增，不可一開始就太刁鑽；這項限制不約束
+    地圖探索中的紅鯡魚或裝飾性線索。
 
 ---
 
@@ -290,7 +296,7 @@ cyberpunk全息、華麗魔法少女、普通RPG道具欄。
 - [x] 第1主角（Sophia）人設已定（見 1char_personality/Sophia.pdf），剩餘2位主角仍待補
 - [ ] 第1主角（Sophia）、剩餘2位主角的正式美術參考圖
 - [ ] BG / BGM 正式素材（目前mockup圖已示範場景氣氛，但非最終可用素材）
-- [ ] 第一章劇情大綱/劇本（host背景、案件1內容已有世界觀與人設基礎，仍待具體劇本）
-- [ ] 案件1的具體謎底與所需Excel函數對照
-- [ ] Story Dialogue UI demo 的對白資料格式定案後，跟案件資料結構怎麼串接
+- [x] 第一章劇情大綱/劇本已完成v1.0，見 [3case/case1_script_draft_v0.1.md](3case/case1_script_draft_v0.1.md)
+- [x] 案件1的具體謎底與所需Excel函數對照已定案（見上述劇本附錄A：COUNTIF/COUNTIFS/SUMIF三關）
+- [x] Story Dialogue UI demo 的對白資料格式已定案並落地：見`2godot_project/data/cases/case_01.json`，劇本逐句敘事文字已拆成id/type/speaker_id/speaker_name/text/objective_update等欄位
 - [x] Excel解謎器Mockup精準重建：第1、2批素材完成並接上，第3批（六個公式圖示＋底部提示框/徽章）**決定不做**，到此收尾，詳見 [2godot_project/readme.md](2godot_project/readme.md) 與 [2godot_project/assets/ui/excel_solver/readme.md](2godot_project/assets/ui/excel_solver/readme.md)
