@@ -11,3 +11,7 @@ scratch/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Blender自動備份與寫入中的暫存檔；正式來源檔由Git LFS保存。
+*.blend1
+*.blend@

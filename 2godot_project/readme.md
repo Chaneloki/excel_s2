@@ -186,9 +186,9 @@ D1九宮格素材（第2/3/4/5/8格）對應，每一格會變成樹裡的一個
 07（案件資料結構零件`CaseData`+其獨立測試場景）、08（劇情特效零件
 `DialogueEffects`+其獨立測試場景）、09（案件一純劇情Demo）、
 10（Detective Mode調查狀態核心`InvestigationState`+其獨立測試場景）。
-下一個Detective Mode零件按規劃使用 `11_`：
+下一個Detective Mode零件按3D混合架構規劃使用 `11_`：
 
-- `11_detective_pov_camera.gd` / `.tscn`
+- `11_d1_3d_import_test.gd` / `.tscn`
 
 ---
 
